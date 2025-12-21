@@ -60,36 +60,36 @@ Akon is designed for both **systems-level performance** and **data science agili
 
 ### High-Level Core Types
 
-- `int`  
+- `Int`  
   Signed 64-bit integer (default integer type)
 
-- `bigint`  
+- `BigInt`  
   Arbitrary-precision signed integer
 
-- `float`  
+- `Float`  
   Signed 64-bit floating-point number
 
-- `bigfloat`  
+- `BigFloat`  
   Arbitrary-precision floating-point number
 
-- `decimal`  
+- `Decimal`  
   Arbitrary-precision decimal type (financial/scientific use)
 
-- `string`  
+- `String`  
   UTF-8 string type
 
-- `bool`  
-  Boolean (`true` / `false`)
+- `Bool`  
+  Boolean (`True` / `False`)
 
-- `array<T>`  
+- `Array<T>`  
   Contiguous memory array with explicit element type
 
-- `dict<K, V>`  
+- `Dict<K, V>`  
   Dictionary similar to Python  
   - Keys must be static and homogeneous  
   - Values may be heterogeneous
 
-- `tensor`  
+- `Tensor`  
   Planned type for Machine Learning (not finalized)
 
 ---
@@ -127,26 +127,26 @@ Akon is designed for both **systems-level performance** and **data science agili
 ### Variable Declarations
 
 ```akon
-int number = 10;
-float number_float = 10.5;
+Int number = 10;
+Float number_float = 10.5;
 
-bigint big_number = 10**500;
-bigfloat big_number_float = 10.5**500;
+BigInt big_number = 10**500;
+BigFloat big_number_float = 10.5**500;
 
 // Prefer basic int and float when possible
 
-string language_name = "Akon";
+String language_name = "Akon";
 
-array<string> languages = ["Akon", "C", "Python", "C++", "Rust"];
+Array<String> languages = ["Akon", "C", "Python", "C++", "Rust"];
 
-dict<string, string> developers = {
+Dict<String, String> developers = {
     "Guido van Rossum": "Python",
     "Bjarne Stroustrup": "C++",
     "Graydon Hoare": "Rust",
     "Me": "Akon",
 };
 
-bool in_development = true;
+Bool in_development = True;
 ```
 ---
 
@@ -157,19 +157,19 @@ bool in_development = true;
 
 dynamic variable = "Hello, World";
 variable = 2025;
-variable = true;
+variable = True;
 ```
 
 Dynamic typing is allowed but discouraged unless necessary. It is useful for rapid prototyping but should be used responsibly.
 
 ```akon
-array<dynamic> list = [1, 2, 3, "hello", "Alex", [1.5, 6.3]];
+Array<dynamic> list = [1, 2, 3, "hello", "Alex", [1.5, 6.3]];
 
-dict<string, dynamic> person = {
+Dict<String, dynamic> person = {
     "name":"Jonh Doe",
     "dni":"123456789",
     "children": 2,
-    "married": true,
+    "married": True,
 };
 ```
 > Dictionary keys must be static and homogeneous (e.g., all strings or all integers). Values may be 
@@ -182,7 +182,7 @@ dict<string, dynamic> person = {
 ### Hello World(Block Syntax)
 
 ```akon
-func main(void) -> int
+func main(void) -> Int
 {
     print("Hello World");
     return 0;
@@ -193,9 +193,9 @@ func main(void) -> int
 ### Conditionals(Age Checker)
 
 ```akon
-func main(void) -> int
+func main(void) -> Int
 {
-    int gae = read_Int("Enter your age: ");
+    Int age = read_Int("Enter your age: ");
     
     if (age < 0)
     {
@@ -221,14 +221,14 @@ func main(void) -> int
 
 ### Loops(Money, More Money)
 ```akon
-func main(void) -> int
+func main(void) -> Int
 {
-    int money = 1;
+    Int money = 1;
 
-    while (true)
+    while (True)
     {
         print("You have", money, "dollars. Do you want to double it?");
-        string answer = readString("[Y/N]: ", limit=1).to_lower();
+        String answer = readString("[Y/N]: ", limit=1).to_lower();
 
         if (answer == 'y')
         {
@@ -251,9 +251,9 @@ func main(void) -> int
 
 ### Funtions(Factorial)
 ```akon
-func fact(int n) -> int
+func fact(int n) -> Int
 {
-    int product = 1;
+    Int product = 1;
     
     for (i in range(1, n + 1))
     {
@@ -272,7 +272,7 @@ Akon supports both block-based `{}` syntax and identation-based syntax
 
 ### Hello World(Identation)
 ```akon
-func main(void) -> int:
+func main(void) -> Int:
     print("Hello World")
     return 0
 ```
