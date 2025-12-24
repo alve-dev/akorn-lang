@@ -8,6 +8,9 @@ class TokenType(Enum):
     BOOL = auto()
     STRING = auto()
     
+    #Keywords conditionals
+    IF = auto()
+    
     #Signs
     PLUS = auto()
     MINUS = auto()
@@ -30,8 +33,9 @@ class TokenType(Enum):
     OR = auto()
     NOT = auto()
     
-    #Semicolon
+    #Special Simbols
     SEMICOLON = auto()
+    COMMA = auto()
     
     #Parens and braces
     LPAREN = auto()

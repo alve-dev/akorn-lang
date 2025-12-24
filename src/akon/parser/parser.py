@@ -1,6 +1,6 @@
 from akon.lexer.token import Token, TokenType
 from akon.ast.nodes import *
-from akon.diagnostic.akon_errors import ParserError, NameErrorAkon, ErrorReporter
+from akon.diagnostic.akon_errors import ParserError, NameErrorAkon, DeclarationError, MultiDeclarationError, ErrorReporter
 from akon.enviroment.enviroment import Enviroment
 
 class Parser:
@@ -58,7 +58,9 @@ class Parser:
         
         if self.current_token.type in AKON_TYPES:
             if self.peek(TokenType.IDENT):
-                return self.parse_declaration(self.current_token.type)
+                var_type_token = self.current_token
+                self.eat(var_type_token.type)
+                return self.parse_declaration(var_type_token)
             else:
                 self.reporter.add_error(
                     ParserError(
@@ -72,8 +74,11 @@ class Parser:
                 self.stop() 
         
         #Asignacion de variables
-        elif self.current_token.type == TokenType.IDENT and self.peek(TokenType.ASSIGN):
-            return self.parse_assignment()
+        elif self.current_token.type == TokenType.IDENT:
+            if self.peek(TokenType.ASSIGN):
+                return self.parse_assignment()
+            elif self.peek(TokenType.LPAREN):
+                return self.parse_call_function()
                 
         #Numero
         elif self.current_token.type == TokenType.NUMBER:
@@ -95,15 +100,52 @@ class Parser:
                 )
             )
             self.stop()
-    
-    def parse_declaration(self, token: TokenType) -> DeclarationNode:
+
+    def valid_var(self, var_name: str, var_type: str, var_value: Node, line: int, column: int) -> bool | None:
+        if self.env.define_var(var_name, var_type, var_value):
+            return True
+        else:
+            self.reporter.add_error(
+                    DeclarationError(
+                        "You tried to redeclare an existing variable in scope",
+                        line,
+                        column,
+                        name = var_name,
+                    )
+                )
+            self.stop()
+
+    def parse_declaration(self, var_type_token: TokenType) -> list[DeclarationNode]:
+        node = self.parse_single_declaration(var_type_token)
+        
+        declarations = [node]
+        #Posible multi-Declaration sino single-declaration
+        if self.current_token.type == TokenType.COMMA:
+            
+            #Hay ident despues de la coma?, sino es error
+            if self.peek(TokenType.IDENT):
+                self.eat(TokenType.COMMA)
+                for declaration in self.parse_declaration(var_type_token):
+                    declarations.append(declaration)
+                    
+            else:
+                self.reporter.add_error(
+                    MultiDeclarationError(
+                        "Possible attempt at multi-declaration of variables, and an ident was needed after the comma.",
+                        self.current_token.line,
+                        self.current_token.column
+                    )
+                )
+        
+        return declarations
+
+    def parse_single_declaration(self, var_type_token: TokenType) -> DeclarationNode:
         #Locacion de la declaracion
         line_declaration = self.current_token.line
         column_declaration = self.current_token.column
         
         #Informacion de la declaracion
-        var_type = self.current_token.value
-        self.eat(token)
+        var_type = var_type_token.value
         var_name = self.current_token.value
         self.eat(TokenType.IDENT)
         
@@ -111,24 +153,14 @@ class Parser:
         if self.current_token.type == TokenType.ASSIGN:
             self.eat(TokenType.ASSIGN)
             var_value = self.expression()
-            
-            if self.env.define_var(var_name, var_type, var_value):
-                return DeclarationNode(var_name, var_type, var_value)
-            else:
-                self.reporter.add_error(
-                    NameErrorAkon(
-                        "A variable with that identifier already exists in the scope",
-                        line_declaration,
-                        column_declaration,
-                        name = var_name,
-                    )
-                )
-                self.stop()
+            self.valid_var(var_name, var_type, var_value, line_declaration, column_declaration)
+            return DeclarationNode(var_name, var_type, var_value)
                         
-        #Es declaracion sin asignacion?
-        elif self.current_token.type == TokenType.SEMICOLON:
-            self.env.define_var(var_name, var_type)
-            return DeclarationNode(var_name, var_type)
+        #Es declaracion sin asignacion o posible multi-declaration?
+        elif self.current_token.type == TokenType.SEMICOLON or self.current_token.type == TokenType.COMMA:
+            var_value = NoneNode(self.current_token.line, self.current_token.column)
+            self.valid_var(var_name, var_type, var_value, line_declaration, column_declaration)
+            return DeclarationNode(var_name, var_type, var_value)
         
         #Es una declaracion invalida
         else:
@@ -137,12 +169,12 @@ class Parser:
                         "Invalid variable declaration attempt.",
                         line_declaration,
                         column_declaration,
-                        expected="'=' | ';'",
+                        expected="'=' | ';' | ','",
                         get=self.current_token.value,
                     )
             )
-            self.stop()
-             
+            self.stop()          
+         
     def parse_assignment(self) -> AssignmentNode:
         var_name = self.current_token.value
         self.eat(TokenType.IDENT)
@@ -161,7 +193,36 @@ class Parser:
                 )
             )
             self.stop()
+    
+    def parse_call_function(self) -> CallNode:
+        call_name = self.current_token.value
+        self.eat(TokenType.IDENT)
+        self.eat(TokenType.LPAREN)
+        call_args = []
         
+        while True:
+            current_arg = self.expression()
+            call_args.append(current_arg)
+            if self.current_token.type == TokenType.COMMA:
+                self.eat(TokenType.COMMA)
+                continue
+            elif self.current_token.type == TokenType.RPAREN:
+                self.eat(TokenType.RPAREN)
+                break
+            else:
+                self.reporter.add_error(
+                    ParserError(
+                        f"Attempt to call {call_name} function failed",
+                        self.current_token.line,
+                        self.current_token.column,
+                        expected="",
+                        get="",
+                    )
+                )
+                self.stop()
+        
+        return CallNode(call_name, call_args)
+            
     def parse_program(self) -> ProgramNode:
         statements: list[Node] = []
         while not self.at_end():
@@ -172,12 +233,26 @@ class Parser:
                 break
             
             node = self.parse_statement()
-            statements.append(node)
+            
+            if isinstance(node, list):
+                for statement in node:
+                    statements.append(statement)
+            else:
+                statements.append(node)
             
         return ProgramNode(statements)
         
     def expression(self) -> Node:
-        return self.boolean_expr()
+        return self.not_boolean_expr()
+
+    def not_boolean_expr(self) -> Node:
+        if self.current_token.type == TokenType.NOT:
+            self.eat(TokenType.NOT)
+            node = NotBooleanNode(self.not_boolean_expr())
+        else:
+            node = self.boolean_expr()
+            
+        return node
 
     def boolean_expr(self) -> Node:
         node = self.comp_expr()
@@ -285,9 +360,21 @@ class Parser:
         
         #Is a identifier?
         elif self.current_token.type == TokenType.IDENT:
-            node = VariableNode(self.current_token.value)
-            self.eat(TokenType.IDENT)
-            return node
+            if self.env.lookup_var(self.current_token.value):
+                node = VariableNode(self.current_token.value, self.current_token.line, self.current_token.column)
+                self.eat(TokenType.IDENT)
+                return node
+            else:
+                self.reporter.add_error(
+                NameErrorAkon(
+                    "You tried to access a non-existent variable",
+                    self.current_token.line,
+                    self.current_token.column,
+                    name=self.current_token.value,
+                )
+            )
+            self.stop()
+                
             
         else:
             self.error_reporter.add_error(
@@ -300,3 +387,4 @@ class Parser:
                 )
             )
             self.eat(self.current_token.type)
+

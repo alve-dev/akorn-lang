@@ -10,6 +10,7 @@ class Lexer:
         "Bool":TokenType.BOOL,
         "True":TokenType.TRUE,
         "False":TokenType.FALSE,
+        "if":TokenType.IF,
         "and":TokenType.AND,
         "or":TokenType.OR,
         "not":TokenType.NOT,
@@ -58,7 +59,7 @@ class Lexer:
                     
                     if self.current_char == "/":
                         self.advance()
-                        break
+                        return
                 
             self.reporter.add_error(
                 LexerError(
@@ -225,12 +226,18 @@ class Lexer:
             if self.current_char.isspace():
                 self.advance()
                     
-            #Semicolon and Colon
-            elif self.current_char == ";":
+            #Semicolon
+            elif self.current_char == ';':
                 token = Token(TokenType.SEMICOLON, ';', self.column, self.line)
                 self.tokens_array.append(token)
                 self.advance()
-                
+            
+            #Comma
+            elif self.current_char == ',':
+                token = Token(TokenType.COMMA, ',', self.column, self.line)
+                self.tokens_array.append(token)
+                self.advance()
+            
             #Parenthesis, Brackets and Braces
             elif self.current_char == '(':
                 token = Token(TokenType.LPAREN, '(', self.column, self.line)

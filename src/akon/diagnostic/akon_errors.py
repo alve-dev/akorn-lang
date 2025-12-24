@@ -2,7 +2,6 @@ from __future__ import annotations
 from typing import Optional, Any
 from rich.console import Console
 
-
 class AkonError:
     """Base class for all errors in the CyLp language."""
     
@@ -76,9 +75,20 @@ class TypeErrorAkon(AkonError):
     def details(self):
         return f" -> esperado: {self.expected_type}, encontrado: {self.got_type}"
 
-class DeclarationErrorAkon(AkonError):
-    """"""
+class DeclarationError(AkonError):
+    """Error in attempting to declare a variable with an identifier already used in the scope
+    
+    extra attributes: name = existing variable identifier in the scope
+    """
 
+    def details(self):
+        return f" -> '{self.name}' already existing"
+
+class MultiDeclarationError(AkonError):
+    """Error in attempt to multi-declare variables"""
+
+    def details(self):
+        return f""
 
 class NameErrorAkon(AkonError):
     """Undeclared or out-of-scope identifier.
@@ -86,13 +96,22 @@ class NameErrorAkon(AkonError):
     Extra attributes: name = the name that does not exist in the scope"""
     
     def details(self):
-        return f" -> '{self.name}' no esta definido"
+        return f" -> '{self.name}' non-existent"
 
-class RuntimeErrorAkon(AkonError):
-    """Error during program execution."""
+class ZeroDivisionErrorAkon(AkonError):
+    """Error trying to divide by zero in Akon Programming Language"""
     
     def details(self):
-        return f" durante operacion: {self.operation}"
+        pass
+
+class RuntimeErrorAkon(AkonError):
+    """Error during program execution.
+    
+    extra attributes: operation
+    """
+    
+    def details(self):
+        pass
         
 class ErrorReporter:
     def __init__(self) -> None:
