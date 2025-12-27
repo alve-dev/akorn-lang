@@ -150,11 +150,23 @@ class Interpreter:
     def visit_declar_assign(self, decl_assign_node: DeclarationNode | AssignmentNode, scope: Enviroment):
         return self.visit_node(decl_assign_node.value, scope)
 
+    def visit_elif_node(self, elif_node: ElIfNode):
+        bool_conditional = self.visit_node(elif_node.condition, elif_node.scope)
+        
+        if bool_conditional:
+            self.interpret_statements(elif_node)
+        elif isinstance(elif_node.elif_node, ElIfNode):
+            self.visit_elif_node(elif_node.elif_node)
+        elif isinstance(elif_node.else_node, ElseNode):
+            self.interpret_statements(elif_node.else_node)
+    
     def visit_if_node(self, if_node: IfNode):
         bool_conditional = self.visit_node(if_node.condition, if_node.scope)
         
         if bool_conditional:
             self.interpret_statements(if_node)
+        elif isinstance(if_node.elif_node, ElIfNode):
+            self.visit_elif_node(if_node.elif_node)
         else:
             self.interpret_statements(if_node.else_node)
 
@@ -207,11 +219,29 @@ class Interpreter:
         input_string = input(*values)
         return input_string
     
+    def builtin_read_bool(args) -> bool:
+        values = []
+        for arg in args:
+            values.append(arg)
+            
+        input_string = input(values[0])
+        
+        while True:
+            if input_string == values[1]:
+                return True
+            elif input_string == values[2]:
+                return False
+            else:
+                input_string = input(values[0])
+            
+            
+            
     BUILTINS = {
         "write":builtin_write,
         "readInt":builtin_read_int,
         "readFloat":builtin_read_float,
         "readString":builtin_read_string,
+        "readBool":builtin_read_bool,
     }
 
     def visit_call_node(self, call_node: CallNode, scope: Enviroment):

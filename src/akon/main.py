@@ -4,6 +4,7 @@ from akon.runtime.interpreter import Interpreter
 from akon.diagnostic.akon_errors import ErrorReporter
 from akon.utils.print_ast import print_ast
 from akon.utils.print_scope import print_scope
+import pathlib
 
 #Reporter Error
 reporter = ErrorReporter()
@@ -16,9 +17,13 @@ def main():
         
         if entrada == "exit":
             break
+
+        ruta = pathlib.Path("examples/test.akon")
+        ruta.parent.mkdir(parents=True, exist_ok=True)
+        ruta.touch(exist_ok=True)
         
         #Code Akon
-        with open(entrada, "r") as ak:
+        with open(ruta, "r") as ak:
             code = ak.read()
         
         #Lexer

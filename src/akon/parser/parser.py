@@ -290,12 +290,64 @@ class Parser:
                 statements.append(node)
         
         return ElseNode(statements, scope)
+    
+    def parse_elif_statement(self, scope_extern: Enviroment) -> ElIfNode:
+        line_elif_statement = self.current_token.line
+        column_elif_statement = self.current_token.column
+        scope = Enviroment(scope_extern)
+        else_node = NoneNode(line_elif_statement, column_elif_statement)
+        elif_node = NoneNode(line_elif_statement, column_elif_statement)
+        
+        self.eat(TokenType.ELIF)
+        self.eat(TokenType.LPAREN)
+        
+        condition = self.expression(scope)
+        
+        self.eat(TokenType.RPAREN)
+        self.eat(TokenType.LBRACE)
+        
+        statements = []
+        while True:
+            if self.current_token.type == TokenType.SEMICOLON:
+                self.eat(TokenType.SEMICOLON)
                 
+            if self.at_end():
+                self.reporter.add_error(
+                    ParserError(
+                        "A '}' is expected when closing the if statement.",
+                        line_elif_statement,
+                        column_elif_statement,
+                        expected="'}'",
+                        get="",
+                    )
+                )
+                
+            if self.current_token.type == TokenType.RBRACE:
+                self.eat(TokenType.RBRACE)
+
+                if self.current_token.type == TokenType.ELSE:
+                    else_node = self.parse_else_statement(scope_extern)
+                elif self.current_token.type == TokenType.ELIF:
+                    elif_node = self.parse_elif_statement(scope_extern)
+                    
+                break
+            
+            node = self.parse_statement(scope)
+            
+            if isinstance(node, list):
+                for statement in node:
+                    statements.append(statement)
+            else:
+                statements.append(node)
+                
+        return ElIfNode(condition, statements, scope, elif_node, else_node)
+        
     def parse_if_statement(self, scope_extern: Enviroment) -> IfNode:
         line_if_statement = self.current_token.line
         column_if_statement = self.current_token.column
         scope = Enviroment(scope_extern)
         else_node = NoneNode(line_if_statement, column_if_statement)
+        elif_node = NoneNode(line_if_statement, column_if_statement)
         
         self.eat(TokenType.IF)
         self.eat(TokenType.LPAREN)
@@ -326,7 +378,8 @@ class Parser:
 
                 if self.current_token.type == TokenType.ELSE:
                     else_node = self.parse_else_statement(scope_extern)
-        
+                elif self.current_token.type == TokenType.ELIF:
+                    elif_node = self.parse_elif_statement(scope_extern)
                 break
             
             node = self.parse_statement(scope)
@@ -337,7 +390,7 @@ class Parser:
             else:
                 statements.append(node)
     
-        return IfNode(condition, statements,scope, else_node)        
+        return IfNode(condition, statements,scope, elif_node, else_node)        
             
     def parse_program(self) -> ProgramNode:
         statements: list[Node] = []

@@ -15,6 +15,7 @@ class TokenType(Enum):
     #Keywords conditionals
     IF = auto()
     ELSE = auto()
+    ELIF = auto()
     
     #Signs
     PLUS = auto()

@@ -14,6 +14,7 @@ class Lexer:
         "False":TokenType.FALSE,
         "if":TokenType.IF,
         "else":TokenType.ELSE,
+        "elif":TokenType.ELIF,
         "and":TokenType.AND,
         "or":TokenType.OR,
         "not":TokenType.NOT,
