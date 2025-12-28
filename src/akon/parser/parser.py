@@ -104,22 +104,14 @@ class Parser:
                 return self.parse_assignment(scope)
             elif self.peek(TokenType.LPAREN):
                 return self.parse_call_function(scope)
-                
-        #Numero
-        elif self.current_token.type == TokenType.NUMBER:
-            return self.expression(scope)
-        
-        #Strings Literals
-        elif self.current_token.type == TokenType.STRING_LITERAL:
-            return self.expression(scope)
-        
+       
         #If-Elif-Else
         elif self.current_token.type == TokenType.IF:
             if self.peek(TokenType.LPAREN):
                 return self.parse_if_statement(scope)
             else:
                 self.eat(TokenType.LPAREN)
-                
+           
         #Algo extraño
         else:
             self.reporter.add_error(
@@ -252,134 +244,64 @@ class Parser:
                 self.stop()
         
         return CallNode(call_name, call_args)
+            
+    def parse_if_statement(self, scope: Enviroment) -> IfNode:
+        branches = []
     
-    def parse_else_statement(self, scope_extern: Enviroment) -> ElseNode:
-        line_else_statement = self.current_token.line
-        column_else_statement = self.current_token.column
-        self.eat(TokenType.ELSE)
-        self.eat(TokenType.LBRACE)
-        
-        scope = Enviroment(scope_extern)
-        
-        statements: list[Node] = []
-        while True:
-            if self.current_token.type == TokenType.SEMICOLON:
-                self.eat(TokenType.SEMICOLON)
-            
-            if self.at_end():
-                self.reporter.add_error(
-                    ParserError(
-                        "A '}' is expected when closing the else statement.",
-                        line_else_statement,
-                        column_else_statement,
-                        expected="'}'",
-                        get="",
-                    )
-                )
-            
-            if self.current_token.type == TokenType.RBRACE:
-                self.eat(TokenType.RBRACE)
-                break
-            
-            node = self.parse_statement(scope_extern)
-            
-            if isinstance(node, list):
-                for statement in node:
-                    statements.append(statement)
-            else:
-                statements.append(node)
-        
-        return ElseNode(statements, scope)
-    
-    def parse_elif_statement(self, scope_extern: Enviroment) -> ElIfNode:
-        line_elif_statement = self.current_token.line
-        column_elif_statement = self.current_token.column
-        scope = Enviroment(scope_extern)
-        else_node = NoneNode(line_elif_statement, column_elif_statement)
-        elif_node = NoneNode(line_elif_statement, column_elif_statement)
-        
-        self.eat(TokenType.ELIF)
-        self.eat(TokenType.LPAREN)
-        
-        condition = self.expression(scope)
-        
-        self.eat(TokenType.RPAREN)
-        self.eat(TokenType.LBRACE)
-        
-        statements = []
-        while True:
-            if self.current_token.type == TokenType.SEMICOLON:
-                self.eat(TokenType.SEMICOLON)
-                
-            if self.at_end():
-                self.reporter.add_error(
-                    ParserError(
-                        "A '}' is expected when closing the if statement.",
-                        line_elif_statement,
-                        column_elif_statement,
-                        expected="'}'",
-                        get="",
-                    )
-                )
-                
-            if self.current_token.type == TokenType.RBRACE:
-                self.eat(TokenType.RBRACE)
-
-                if self.current_token.type == TokenType.ELSE:
-                    else_node = self.parse_else_statement(scope_extern)
-                elif self.current_token.type == TokenType.ELIF:
-                    elif_node = self.parse_elif_statement(scope_extern)
-                    
-                break
-            
-            node = self.parse_statement(scope)
-            
-            if isinstance(node, list):
-                for statement in node:
-                    statements.append(statement)
-            else:
-                statements.append(node)
-                
-        return ElIfNode(condition, statements, scope, elif_node, else_node)
-        
-    def parse_if_statement(self, scope_extern: Enviroment) -> IfNode:
-        line_if_statement = self.current_token.line
-        column_if_statement = self.current_token.column
-        scope = Enviroment(scope_extern)
-        else_node = NoneNode(line_if_statement, column_if_statement)
-        elif_node = NoneNode(line_if_statement, column_if_statement)
-        
+        #Condition
         self.eat(TokenType.IF)
         self.eat(TokenType.LPAREN)
-        
         condition = self.expression(scope)
-        
         self.eat(TokenType.RPAREN)
-        self.eat(TokenType.LBRACE)
         
-        statements: list[Node] = []
+        block = self.parse_block(scope)
+        branches.append((condition, block))
+        
+        while self.current_token.type == TokenType.ELIF:
+            self.eat(TokenType.ELIF)
+            self.eat(TokenType.LPAREN)
+            condition = self.expression(scope)
+            self.eat(TokenType.RPAREN)
+            
+            block = self.parse_block(scope)
+            branches.append((condition, block))
+
+        if self.current_token.type == TokenType.ELSE:
+            self.eat(TokenType.ELSE)
+            block = self.parse_block(scope)
+            else_node = ElseNode(block)
+            
+        else:
+            else_node = NoneNode(self.current_token.line, self.current_token.column)
+            
+        
+        return IfNode(branches, else_node)        
+    
+    def parse_block(self, scope: Enviroment):
+        line_block = self.current_token.line
+        column_block = self.current_token.column
+        self.eat(TokenType.LBRACE)
+        scope_block = Enviroment(scope)
+        statements = []
+        
         while True:
             if self.current_token.type == TokenType.SEMICOLON:
                 self.eat(TokenType.SEMICOLON)
-                
+
             if self.at_end():
                 self.reporter.add_error(
                     ParserError(
                         "A '}' is expected when closing the if statement.",
-                        line_if_statement,
-                        column_if_statement,
+                        line_block,
+                        column_block,
                         expected="'}'",
                         get="",
                     )
                 )
+                self.stop()
                 
             if self.current_token.type == TokenType.RBRACE:
                 self.eat(TokenType.RBRACE)
-
-                if self.current_token.type == TokenType.ELSE:
-                    else_node = self.parse_else_statement(scope_extern)
-                elif self.current_token.type == TokenType.ELIF:
-                    elif_node = self.parse_elif_statement(scope_extern)
                 break
             
             node = self.parse_statement(scope)
@@ -389,9 +311,9 @@ class Parser:
                     statements.append(statement)
             else:
                 statements.append(node)
-    
-        return IfNode(condition, statements,scope, elif_node, else_node)        
-            
+        
+        return BlockNode(statements, scope_block)
+                
     def parse_program(self) -> ProgramNode:
         statements: list[Node] = []
         scope = Enviroment()

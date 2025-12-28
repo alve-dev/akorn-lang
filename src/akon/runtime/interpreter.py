@@ -10,7 +10,7 @@ class Interpreter:
     def stop(self):
         raise Exception
         
-    def interpret_statements(self, node):
+    def interpret_main(self, node):
         statements = node.statements
         scope = node.scope
         for statement in statements:
@@ -26,7 +26,25 @@ class Interpreter:
                 self.visit_call_node(statement, scope)
             elif isinstance(statement, IfNode):
                 self.visit_if_node(statement)
-           
+    
+    def interpretet_block(self, block_node: BlockNode):
+        statements = block_node.statements
+        scope = block_node.scope
+        
+        for statement in statements:
+            if isinstance(statement, DeclarationNode) or isinstance(statement, AssignmentNode):
+                var_value = self.visit_declar_assign(statement, scope)
+                statement.value = var_value
+                self.update_scope_var(
+                    statement.name,
+                    var_value,
+                    scope,
+                )
+            elif isinstance(statement, CallNode):
+                self.visit_call_node(statement, scope)
+            elif isinstance(statement, IfNode):
+                self.visit_if_node(statement)
+                   
     def update_scope_var(self, var_name, var_value, scope: Enviroment):        
         scope.assignment_var(var_name, var_value, True)
    
@@ -149,26 +167,20 @@ class Interpreter:
     
     def visit_declar_assign(self, decl_assign_node: DeclarationNode | AssignmentNode, scope: Enviroment):
         return self.visit_node(decl_assign_node.value, scope)
-
-    def visit_elif_node(self, elif_node: ElIfNode):
-        bool_conditional = self.visit_node(elif_node.condition, elif_node.scope)
-        
-        if bool_conditional:
-            self.interpret_statements(elif_node)
-        elif isinstance(elif_node.elif_node, ElIfNode):
-            self.visit_elif_node(elif_node.elif_node)
-        elif isinstance(elif_node.else_node, ElseNode):
-            self.interpret_statements(elif_node.else_node)
-    
+  
     def visit_if_node(self, if_node: IfNode):
-        bool_conditional = self.visit_node(if_node.condition, if_node.scope)
-        
-        if bool_conditional:
-            self.interpret_statements(if_node)
-        elif isinstance(if_node.elif_node, ElIfNode):
-            self.visit_elif_node(if_node.elif_node)
-        else:
-            self.interpret_statements(if_node.else_node)
+        len_branches = len(if_node.branches)
+        for body in range(len_branches):
+            condition = if_node.branches[body][0]
+            scope = if_node.branches[body][1].scope
+             
+            bool_conditional = self.visit_node(condition, scope)
+                
+            if bool_conditional:
+                self.interpretet_block(if_node.branches[body][1])
+                break
+            elif isinstance(if_node.else_node, ElseNode):
+                self.interpretet_block(if_node.else_node.block)
 
     # Builtin Functions temporals
     def builtin_write(args) -> None:
@@ -233,9 +245,7 @@ class Interpreter:
                 return False
             else:
                 input_string = input(values[0])
-            
-            
-            
+                   
     BUILTINS = {
         "write":builtin_write,
         "readInt":builtin_read_int,
@@ -253,7 +263,7 @@ class Interpreter:
                 
         return self.BUILTINS[call_node.calle](args)
 
-    def visit_node(self, node: Node, scope: Enviroment):
+    def visit_node(self, node: Node, scope):
         if isinstance(node, CallNode):
             return self.visit_call_node(node, scope)
         

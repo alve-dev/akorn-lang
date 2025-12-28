@@ -222,53 +222,26 @@ class DeclarationNode(Node):
 class ElseNode(Node):
     def __init__(
         self,
-        statements: list[Node],
-        scope
+        block
         ) -> None:
         
-        self.statements = statements
-        self.scope = scope
+        self.block = block
         
     def __repr__(self):
-        return f"<{__class__.__name__} statements={self.statements}"
-    
-class ElIfNode(Node):
-    def __init__(
-        self,
-        condition: Node,
-        statements: list[Node],
-        scope,
-        elif_node,
-        else_node = NoneNode | ElseNode
-        ) -> None:
-        
-        self.condition = condition
-        self.statements = statements
-        self.elif_node = elif_node
-        self.scope = scope
-        self.else_node = else_node
-
-    def __repr__(self):
-        return f"<{__class__.__name__} condition={self.condition}, statements={self.statements}>"    
+        return f"<{__class__.__name__} statements={self.block}"
     
 class IfNode(Node):
     def __init__(
         self,
-        condition: Node,
-        statements: list[Node],
-        scope,
-        elif_nodes: NoneNode | ElIfNode,
+        branches,
         else_node = NoneNode | ElseNode
         ) -> None:
         
-        self.condition = condition
-        self.statements = statements
-        self.elif_node = elif_nodes
+        self.branches = branches
         self.else_node = else_node
-        self.scope = scope
         
     def __repr__(self):
-        return f"<{__class__.__name__} condition={self.condition}, statements={self.condition}"
+        return f"<{__class__.__name__} branches={self.branches} else={self.else_node}"
 
 class CallNode(Node):
     def __init__(
@@ -282,6 +255,19 @@ class CallNode(Node):
         
     def __repr__(self):
         return f"<{__class__.__name__} calle={self.calle} args={self.args}"
+
+class BlockNode(Node):
+    def __init__(
+        self,
+        statements: list[Node],
+        scope
+        ) -> None:
+        
+        self.statements = statements
+        self.scope = scope
+        
+    def __repr__(self):
+        return f"{__class__.__name__} statements={self.statements} scope={self.scope}"
 
 class ProgramNode(Node):
     def __init__(

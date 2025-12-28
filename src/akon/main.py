@@ -17,8 +17,9 @@ def main():
         
         if entrada == "exit":
             break
-
-        ruta = pathlib.Path("examples/test.akon")
+        
+        base_dir = pathlib.Path(__file__).parent
+        ruta = base_dir / "examples/test.akon"
         ruta.parent.mkdir(parents=True, exist_ok=True)
         ruta.touch(exist_ok=True)
         
@@ -40,7 +41,7 @@ def main():
         
         #Interpreter
         interpreter = Interpreter(root_node, reporter)
-        interpreter.interpret_statements(root_node)
+        interpreter.interpret_main(root_node)
         
         
         
