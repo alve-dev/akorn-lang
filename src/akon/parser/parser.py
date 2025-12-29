@@ -100,11 +100,10 @@ class Parser:
         
         #Asignacion de variables o llamado a funcion
         elif self.current_token.type == TokenType.IDENT:
-            if self.peek(TokenType.ASSIGN):
-                return self.parse_assignment(scope)
-            elif self.peek(TokenType.LPAREN):
+            if self.peek(TokenType.LPAREN):
                 return self.parse_call_function(scope)
-       
+            else:
+                return self.parse_assignment(scope)
         #If-Elif-Else
         elif self.current_token.type == TokenType.IF:
             if self.peek(TokenType.LPAREN):
@@ -200,9 +199,36 @@ class Parser:
     def parse_assignment(self, scope) -> AssignmentNode:
         var_name = self.current_token.value
         self.eat(TokenType.IDENT)
-        self.eat(TokenType.ASSIGN)
         
-        var_value = self.expression(scope)
+        if self.current_token.type == TokenType.ASSIGN:
+            self.eat(TokenType.ASSIGN)
+            var_value = self.expression(scope)
+        else:
+            compuest_signs = [TokenType.PLUS_ASSIGN, TokenType.MINUS_ASSIGN, TokenType.STAR_ASSIGN, TokenType.SLASH_ASSIGN,
+                            TokenType.DOUBLE_STAR_ASSIGN, TokenType.MOD_ASSIGN]
+            if self.current_token.type in compuest_signs:
+                operator: str = None
+                
+                if self.current_token.type == TokenType.PLUS_ASSIGN:
+                    operator = '+'
+                elif self.current_token.type == TokenType.MINUS_ASSIGN:
+                    operator = '-'
+                elif self.current_token.type == TokenType.STAR_ASSIGN:
+                    operator = '*'
+                elif self.current_token.type == TokenType.SLASH_ASSIGN:
+                    operator = '/'
+                elif self.current_token.type == TokenType.DOUBLE_STAR_ASSIGN:
+                    operator = '**'
+                elif self.current_token.type == TokenType.MOD_ASSIGN:
+                    operator = '%'
+                
+                self.eat(self.current_token.type)
+                var_value = BinaryOpNode(
+                    VariableNode(var_name, self.current_token.line, self.current_token.column),
+                    operator,
+                    self.expression(scope)
+                    )
+        
         if scope.assignment_var(var_name, var_value):
             return AssignmentNode(var_name, var_value)
         else:
@@ -336,7 +362,7 @@ class Parser:
         
     def expression(self, scope) -> Node:
         return self.not_boolean_expr(scope)
-
+    
     def not_boolean_expr(self, scope) -> Node:
         if self.current_token.type == TokenType.NOT:
             self.eat(TokenType.NOT)

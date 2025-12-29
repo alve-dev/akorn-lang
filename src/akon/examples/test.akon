@@ -1,4 +1,4 @@
-/*Pedir un numero entero y evaluar si es negativo, positivo o cero
+/*/*Pedir un numero entero y evaluar si es negativo, positivo o cero
 var int x = readInt("Digita un numero: ");
 
 if (x > 0)
@@ -78,3 +78,7 @@ elif (x > 2)
 {
     write("2");
 }*/
+
+/*var int x = 10;
+x += 5;
+write(x) //15*/*/

@@ -29,15 +29,17 @@ def main():
         
         #Lexer
         lexer = Lexer(code, reporter)
-        tokens = lexer.get_tokens()
+        tokens = lexer.tokenize()
+        
+        #print(tokens)
         
         #Parser
         parser = Parser(tokens, reporter)
         root_node = parser.parse_program()
         
         #AST print
-        #print("===ABSTRACT SINTACTIC TREE===")
-        #print_ast(root_node)
+        print("===ABSTRACT SINTACTIC TREE===")
+        print_ast(root_node)
         
         #Interpreter
         interpreter = Interpreter(root_node, reporter)

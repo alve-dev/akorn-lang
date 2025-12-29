@@ -19,11 +19,17 @@ class TokenType(Enum):
     
     #Signs
     PLUS = auto()
+    PLUS_ASSIGN = auto()
     MINUS = auto()
+    MINUS_ASSIGN = auto()
     STAR = auto()
+    STAR_ASSIGN = auto()
     DOUBLE_STAR = auto()
+    DOUBLE_STAR_ASSIGN = auto()
     MOD = auto()
+    MOD_ASSIGN = auto()
     SLASH = auto()
+    SLASH_ASSIGN = auto()
     ASSIGN = auto()
     
     #Signs Comparison
@@ -72,4 +78,4 @@ class Token:
     line: int
     
     def __repr__(self):
-        return f"{__class__.__name__}(type={self.type}, value={self.value}, line={self.line}, column={self.column})"
+        return f"{__class__.__name__}(type={self.type}, value='{self.value}', line={self.line}, column={self.column})"

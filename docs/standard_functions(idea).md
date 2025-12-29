@@ -72,7 +72,7 @@
 ---
 ## Output
 
-### print():
+### write():
 
 - **Descripcion**: imprime strings en consola
 - **Argumentos**: prompt:string, end:string = '\n', sep:string = ' ' 
