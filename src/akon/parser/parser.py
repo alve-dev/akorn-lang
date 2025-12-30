@@ -1,7 +1,7 @@
-from akon.lexer.token import Token, TokenType
-from akon.ast.nodes import *
-from akon.diagnostic.akon_errors import ParserError, NameErrorAkon, DeclarationError, MultiDeclarationError, ErrorReporter
-from akon.enviroment.enviroment import Enviroment
+from akon.lexer import Token, TokenType
+from akon.ast import *
+from akon.diagnostic import ParserError, NameErrorAkon, DeclarationError, MultiDeclarationError, ErrorReporter
+from akon.enviroment import Enviroment
 
 class Parser:
     def __init__(self, tokens:list[Token], reporter: ErrorReporter) -> None:
@@ -11,7 +11,7 @@ class Parser:
         self.length_list = len(self.tokens)
         self.reporter = reporter
 
-    def stop(self) -> None:
+    def stop(self):
         raise Exception
 
     def eat(self, expected_token:TokenType) -> None:
@@ -20,12 +20,12 @@ class Parser:
             if self.position < self.length_list:
                 self.current_token = self.tokens[self.position]
         else:
-            self.error_reporter.add_error(
+            self.reporter.add_error(
                 ParserError(
                     "Parser found something unexpected",
                     self.current_token.line,
                     self.current_token.column,
-                    expected = expected_token.v,
+                    expected = expected_token.value,
                     get = self.current_token.value
                     )
                 )
@@ -106,10 +106,7 @@ class Parser:
                 return self.parse_assignment(scope)
         #If-Elif-Else
         elif self.current_token.type == TokenType.IF:
-            if self.peek(TokenType.LPAREN):
-                return self.parse_if_statement(scope)
-            else:
-                self.eat(TokenType.LPAREN)
+            return self.parse_if_statement(scope)
            
         #Algo extraño
         else:
@@ -159,6 +156,7 @@ class Parser:
                         self.current_token.column
                     )
                 )
+                self.stop()
         
         return declarations
 
@@ -194,7 +192,7 @@ class Parser:
                         get=self.current_token.value,
                     )
             )
-            self.stop()          
+            self.stop()       
          
     def parse_assignment(self, scope) -> AssignmentNode:
         var_name = self.current_token.value
@@ -276,18 +274,14 @@ class Parser:
     
         #Condition
         self.eat(TokenType.IF)
-        self.eat(TokenType.LPAREN)
         condition = self.expression(scope)
-        self.eat(TokenType.RPAREN)
         
         block = self.parse_block(scope)
         branches.append((condition, block))
         
         while self.current_token.type == TokenType.ELIF:
             self.eat(TokenType.ELIF)
-            self.eat(TokenType.LPAREN)
             condition = self.expression(scope)
-            self.eat(TokenType.RPAREN)
             
             block = self.parse_block(scope)
             branches.append((condition, block))

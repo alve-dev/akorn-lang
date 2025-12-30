@@ -88,10 +88,11 @@ Akon is designed for both **systems-level performance** and **data science agili
 - `bool`  
   Boolean (`True` / `False`)
 
-- `array<T>`  
-  Contiguous memory array with explicit element type
+- `array<T, S>`  
+  Contiguous memory array with explicit element 
+  T: Type 
 
-- `dict<K, V>`  
+- `dict<K, V, S>`  
   Dictionary similar to Python  
   - Keys must be static and homogeneous  
   - Values may be heterogeneous

@@ -1,0 +1,14 @@
+let int x = 0;
+
+if x > 0
+{
+    write("Es un numero positivo");
+}
+elif x < 0
+{
+    write("Es un numero negativo");
+}
+else
+{
+    write("Es cero");
+}

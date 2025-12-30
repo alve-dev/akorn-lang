@@ -1,15 +1,15 @@
-from akon.ast.nodes import *
-from akon.diagnostic.akon_errors import ErrorReporter, ZeroDivisionErrorAkon, RuntimeErrorAkon
-from akon.enviroment.enviroment import Enviroment
+from akon.ast import *
+from akon.diagnostic import ErrorReporter, ZeroDivisionErrorAkon, RuntimeErrorAkon
+from akon.enviroment import Enviroment
 
 class Interpreter:
     def __init__(self, root_node: ProgramNode, reporter: ErrorReporter):
         self.root_node = root_node
         self.reporter = reporter
-    
+
     def stop(self):
         raise Exception
-        
+
     def interpret_main(self, node):
         statements = node.statements
         scope = node.scope
@@ -111,7 +111,7 @@ class Interpreter:
                 )
             )
             self.stop()
-
+            
     def visit_binary_operation(self, binary_op_node: BinaryOpNode, scope: Enviroment):
         line_operation = binary_op_node.left.line
         column_operation = binary_op_node.left.column
@@ -179,8 +179,9 @@ class Interpreter:
             if bool_conditional:
                 self.interpretet_block(if_node.branches[body][1])
                 break
-            elif isinstance(if_node.else_node, ElseNode):
-                self.interpretet_block(if_node.else_node.block)
+            
+        if isinstance(if_node.else_node, ElseNode):
+            self.interpretet_block(if_node.else_node.block)
 
     # Builtin Functions temporals
     def builtin_write(args) -> None:

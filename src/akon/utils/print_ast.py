@@ -1,37 +1,48 @@
-from akon.ast.nodes import Node
+from akon.ast import Node
 
-def print_ast(node: Node, indent="", is_last=True):
+def print_ast(node, indent="", is_last=True):
     """
-    Pretty-print an AST tree in a generic way.
+    Pretty-print an AST tree, now supporting lists of tuples [(), ()].
     """
-
     if node is None:
         return
 
-    # Node name
     node_name = node.__class__.__name__
-
-    # Tree branches
     branch = "└── " if is_last else "├── "
     print(indent + branch + node_name)
 
-    # New indentation
     new_indent = indent + ("    " if is_last else "│   ")
-
-    # Collect child attributes
     children = []
 
+    # Función auxiliar para extraer nodos de estructuras anidadas (listas/tuplas)
+    def collect_nodes(item, attr_name):
+        if isinstance(item, (list, tuple)):
+            for sub_item in item:
+                collect_nodes(sub_item, attr_name)
+        elif hasattr(item, "__dict__"):
+            children.append((attr_name, item))
+        else:
+            # Si es un valor simple dentro de una tupla/lista que no es un objeto
+            print(new_indent + f"├── {attr_name} (val): {item}")
+
     for attr, value in vars(node).items():
-        if isinstance(value, list):
+        if isinstance(value, (list, tuple)):
+            # Procesar la lista o lista de tuplas
             for item in value:
-                if hasattr(item, "__dict__"):
+                if isinstance(item, (list, tuple)):
+                    # Caso específico: lista de tuplas [ (nodo, nodo), (nodo, val) ]
+                    collect_nodes(item, attr)
+                elif hasattr(item, "__dict__"):
                     children.append((attr, item))
+                else:
+                    print(new_indent + f"├── {attr}: {item}")
         elif hasattr(value, "__dict__"):
             children.append((attr, value))
         else:
-            # Leaf attribute (value, name, operator, etc.)
+            # Atributo hoja simple
             print(new_indent + f"├── {attr}: {value}")
 
-    # Print children nodes
+    # Imprimir los nodos hijos recolectados
     for i, (_, child) in enumerate(children):
         print_ast(child, new_indent, i == len(children) - 1)
+

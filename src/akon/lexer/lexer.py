@@ -1,6 +1,6 @@
 from string import ascii_letters
 from .token import Token, TokenType
-from akon.diagnostic.akon_errors import LexerError, ErrorReporter
+from akon.diagnostic import LexerError, ErrorReporter
 
 class Lexer:
     keywords = {
@@ -30,9 +30,6 @@ class Lexer:
         self.tokens_array: list[Token] = [] 
         self.code_length: int = len(self.code)
         self.reporter = reporter
-
-    def stop(self):
-        raise Exception
 
     def advance(self) -> None:
         self.position += 1
@@ -155,7 +152,7 @@ class Lexer:
                                 bad_char="*/",
                             )
                         )
-                        self.stop()
+                        self.position += 1
                     
                 elif self.peek() == '=':
                     self.tokens_array.append(Token(TokenType.SLASH_ASSIGN, '/=', self.column, self.line))
@@ -230,7 +227,7 @@ class Lexer:
                                 bad_char=numero_completo,
                             )
                         )
-                        self.stop()
+                        self.position += 1
         
                 if '.' in numero_completo:
                     self.tokens_array.append(Token(TokenType.NUMBER, float(numero_completo), self.column, self.line))
@@ -269,7 +266,7 @@ class Lexer:
                             bad_char=start_quotes,
                         )
                     )
-                    self.stop()
+                    self.position += 1
         
                 if "\\n" in temporal_string:
                     temporal_string = temporal_string.replace("\\n", "\n")
@@ -290,7 +287,7 @@ class Lexer:
                         bad_char=self.current_char,
                     )
                 )
-                self.stop()
+                self.position += 1
               
         self.tokens_array.append(Token(TokenType.EOF, None, 0, 0))
         return self.tokens_array

@@ -1,59 +1,75 @@
-from akon.lexer.lexer import Lexer
-from akon.parser.parser import Parser
-from akon.runtime.interpreter import Interpreter
-from akon.diagnostic.akon_errors import ErrorReporter
-from akon.utils.print_ast import print_ast
-from akon.utils.print_scope import print_scope
-import pathlib
+from akon.cli import run_cli
+from akon.diagnostic import ErrorReporter
+#code -> lexer -> tokens -> parser -> root_node -> interpreter
 
-#Reporter Error
 reporter = ErrorReporter()
 
-#code -> lexer -> tokens -> parser -> root_node -> interpreter
 def main():
-    while True:
-        #Entrada de comandos
-        entrada = input(">> ")
-        
-        if entrada == "exit":
-            break
-        
-        base_dir = pathlib.Path(__file__).parent
-        ruta = base_dir / "examples/test.akon"
-        ruta.parent.mkdir(parents=True, exist_ok=True)
-        ruta.touch(exist_ok=True)
-        
-        #Code Akon
-        with open(ruta, "r") as ak:
-            code = ak.read()
-        
-        #Lexer
-        lexer = Lexer(code, reporter)
-        tokens = lexer.tokenize()
-        
-        #print(tokens)
-        
-        #Parser
-        parser = Parser(tokens, reporter)
-        root_node = parser.parse_program()
-        
-        #AST print
-        #print("===ABSTRACT SINTACTIC TREE===")
-        #print_ast(root_node)
-        
-        #Interpreter
-        interpreter = Interpreter(root_node, reporter)
-        interpreter.interpret_main(root_node)
-        
-        
-        
-        #print("\n===ENVIROMENT(SCOPE)===")
-        #print_scope(root_node.scope)
-    
-    
+    run_cli(reporter)
+
 if __name__ == "__main__":
-    
     try:
         main()
     except:
         reporter.display()
+    
+    """Python match version
+    match x:
+        case 1:
+            print("Es 1")
+        case 2:
+            print(" Es 2")
+        case 3:
+            print("Es 3")
+        case _:
+            print("No se que es voy a esplotar..")
+            explotar()
+            break
+    """
+        
+    """Akon version match
+    match (x)
+    {
+        1 => write("Es 1");
+        2 => write("Es 2");
+        3 => write("Es 3");
+        default => {
+            write("No se que es voy a explotar...");
+            explotar();
+        }
+    }
+    
+    
+    let int number = match x
+    {
+        1 => give 10;
+        2 => give 20;
+        3 => give 30;
+        4 => give 40;
+        5 => give 50;
+        default => {
+            write("Desconocido");
+            give 0;
+        }
+    }
+    
+    //ejemplo de array
+    python::lista = [1, 2, 3]
+    akon::var array<int, 3> lista = [1, 2, 3];
+    
+    python::print(lista[1]) //output: 2
+    akon::write(lista[1]) //output: 2
+    
+    python::lista.append(4) //lista[1, 2, 3, 4]
+    akon::lista.push(4) //lista[1, 2, 3, 4]
+    
+    python::lista.pop(2) //[1, 2, 4]
+    akon::lista.remove(2) //lista[1, 2, 4]
+    
+    python::lista_2d = [[1, 2, 3], [4, 5, 6]]
+    akon::var array<int, [3, 3]> lista_2 = [[1, 2, 3], [4, 5, 6]];
+    
+    python:list_2d[1][2] //elemento numero 3 de la lista numero 2: 3
+    akon:list_2d[1, 2] //elemento numero (1 + 1) * (2 + 1) - 1 osea el elemento numero 6(index 5) en una lista lineal = [1, 2, 3, 4, 5, 6]
+    
+    """

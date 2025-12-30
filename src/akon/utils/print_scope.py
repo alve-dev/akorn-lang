@@ -1,4 +1,4 @@
-from akon.enviroment.enviroment import Enviroment
+from akon.enviroment import Enviroment
 
 def print_scope(env: Enviroment):
     scope = env.scope

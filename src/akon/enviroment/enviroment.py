@@ -1,4 +1,4 @@
-from akon.ast.nodes import Node
+from akon.ast import Node
 
 class Enviroment:
     def __init__(self, parent = None) -> None:
