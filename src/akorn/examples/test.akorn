@@ -1,0 +1,8 @@
+var int count = 1;
+let int n = 2;
+
+while count <= 10
+{
+    write("Hola");
+    count += 1;
+}

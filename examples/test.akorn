@@ -1,0 +1,8 @@
+var int count = 1;
+let int n = 2;
+
+while true
+{
+    write(n, "*", count, "=", n * count);
+    count += 1;
+}
