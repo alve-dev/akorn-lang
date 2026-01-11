@@ -33,7 +33,7 @@ class Interpreter:
     
     def interpretet_block(self, block_node: BlockNode):
         statements = block_node.statements
-        scope = block_node.scope
+        scope: Enviroment = block_node.scope
         
         for statement in statements:
             if isinstance(statement, DeclarationNode) or isinstance(statement, AssignmentNode):
@@ -46,7 +46,14 @@ class Interpreter:
             elif isinstance(statement, CallNode):
                 self.visit_call_node(statement, scope)
             elif isinstance(statement, IfNode):
-                self.visit_if_node(statement)
+                state = self.visit_if_node(statement)
+                return state
+            elif isinstance(statement, BreakStatement):
+                return "break"
+            elif isinstance(statement, ContinueStatement):
+                return "continue"
+        
+        return "continue"
        
                    
     def update_scope_var(self, var_name, var_value, scope: Enviroment):        
@@ -180,18 +187,23 @@ class Interpreter:
             bool_conditional = self.visit_node(condition, scope)
                 
             if bool_conditional:
-                self.interpretet_block(if_node.branches[body][1])
-                return
+                state = self.interpretet_block(if_node.branches[body][1])
+                return state
             
         if isinstance(if_node.else_node, ElseNode):
-            self.interpretet_block(if_node.else_node.block)
+            state = self.interpretet_block(if_node.else_node.block)
+            return state
 
 
     def visit_while_node(self, while_node: WhileNode):
         block = while_node.block
         while self.visit_node(while_node.condition, while_node.block.scope):
-            self.interpretet_block(block)
+            state = self.interpretet_block(block)
 
+            if state == "break":
+                break
+            elif state == "continue":
+                continue
 
     # Builtin Functions temporals
     def builtin_write(args) -> None:

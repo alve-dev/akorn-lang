@@ -1,0 +1,13 @@
+// Ejercicio 2: Comprobande de contraseña
+
+let string password_saved = "johndoe";
+let string password = readString("Contraseña: ");
+
+if password_saved == password
+{
+    write("Contraseña correcta!");
+}
+else
+{
+    write("Contraseña incorrecta -_-");
+}

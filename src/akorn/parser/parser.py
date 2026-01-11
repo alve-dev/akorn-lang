@@ -113,7 +113,18 @@ class Parser:
             return self.parse_if_statement(scope)
 
         elif self.current_token.type == TokenType.WHILE:
-            return self.parse_while_statement(scope)
+            return self.parse_while_statement(scope, False)
+        
+        elif self.current_token.type == TokenType.LOOP:
+            return self.parse_while_statement(scope, True)
+        
+        elif self.current_token.type == TokenType.BREAK:
+            self.eat(TokenType.BREAK)
+            return BreakStatement()
+
+        elif self.current_token_token.type == TokenType.BREAK:
+            self.eat(TokenType.CONTINUE)
+            return ContinueStatement()
         
         #Algo extraño
         else:
@@ -294,9 +305,14 @@ class Parser:
         return IfNode(branches, else_node)        
     
     
-    def parse_while_statement(self, scope: Enviroment) -> WhileNode:
-        self.eat(TokenType.WHILE)
-        cond = self.expression(scope)
+    def parse_while_statement(self, scope: Enviroment, loop: bool) -> WhileNode:
+        if loop:
+            self.eat(TokenType.LOOP)
+            cond = BoolNode(True, self.current_token.line, self.current_token.column)
+        else:
+            self.eat(TokenType.WHILE)
+            cond = self.expression(scope)
+            
         block = self.parse_block(scope)
         
         return WhileNode(cond, block)
@@ -323,7 +339,7 @@ class Parser:
                 self.eat(TokenType.RBRACE)
                 break
             
-            node = self.parse_statement(scope)
+            node = self.parse_statement(scope_block)
             
             if isinstance(node, list):
                 for statement in node:

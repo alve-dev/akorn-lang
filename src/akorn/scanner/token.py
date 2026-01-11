@@ -19,6 +19,9 @@ class TokenType(Enum):
     
     #Keywords loops
     WHILE = auto()
+    LOOP = auto()
+    BREAK = auto()
+    CONTINUE = auto()
     
     #Signs
     PLUS = auto()

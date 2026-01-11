@@ -1,0 +1,4 @@
+//Ejercicio 2: Hola Mundo en variable
+
+let string saludo = "Hola Mundo";
+write(saludo);

@@ -243,6 +243,14 @@ class IfNode(Node):
     def __repr__(self):
         return f"<{__class__.__name__} branches={self.branches} else={self.else_node}>"
 
+class BreakStatement(Node):
+    def __repr__():
+        return f"<{__class__.__name__}"
+
+class ContinueStatement(Node):
+    def __repr__():
+        return f"<{__class__.__name__}>"
+
 class WhileNode(Node):
     def __init__(
         self,
