@@ -54,6 +54,7 @@ class TokenType(Enum):
     #Special Simbols
     SEMICOLON = auto()
     COMMA = auto()
+    NEWLINE = auto()
     
     #Parens and braces
     LPAREN = auto()

@@ -112,15 +112,13 @@ class Interpreter:
 
 
     def visit_not_boolean_operator(self, not_boolean_operator: NotBooleanNode, scope: Enviroment):
-        line_operation = not_boolean_operator.line
-        column_operation = not_boolean_operator.column
         value_bool = self.visit_node(not_boolean_operator.node, scope)
         
         if isinstance(value_bool, bool):
             return not value_bool
         else:
             self.reporter.add_error(
-                f"[BooleanError][line: {line_operation}, col: {column_operation}] You cannot operate on a non-bool value with the boolean operator not"
+                f"[BooleanError] You cannot operate on a non-bool value with the boolean operator not"
             )
             self.stop()
 

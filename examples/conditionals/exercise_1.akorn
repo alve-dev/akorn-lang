@@ -1,6 +1,6 @@
 // Ejercicio 1: Comprobacion de edad
 
-let int age = readInt("¿Cuantos años tienes?: ");
+let int age = readInt("¿Cuantos años tienes?: "
 
 if age > 0 and age < 120
 {

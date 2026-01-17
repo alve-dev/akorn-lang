@@ -1,4 +1,5 @@
 from akorn.scanner import Lexer
+from akorn.syntatic_normalizer import TheNormalizer
 from akorn.parser.parser import Parser
 #from akorn.semantic import TypeChecker
 from akorn.runtime.interpreter import Interpreter
@@ -21,7 +22,15 @@ def cmd_akorn_run(rute_script: str, reporter):
     if reporter.has_errors():
         reporter.display()
         reporter.clear_list_error()
-        return    
+        return
+    
+    the_normalizer = TheNormalizer(tokens, reporter)
+    tokens = the_normalizer.normalizer()
+    
+    if reporter.has_errors():
+        reporter.display()
+        reporter.clear_list_error()
+        return
     
     #Parser
     parser = Parser(tokens, reporter)
@@ -63,6 +72,14 @@ def cmd_akorn_tokens(rute_script: str, reporter):
         reporter.clear_list_error()
         return
     
+    the_normalizer = TheNormalizer(tokens, reporter)
+    tokens = the_normalizer.normalizer()
+    
+    if reporter.has_errors():
+        reporter.display()
+        reporter.clear_list_error()
+        return
+    
     #Print Tokens
     print("Tokens of akon script\n")
     len_tokens = len(tokens)
@@ -82,6 +99,14 @@ def cmd_akorn_ast(rute_script: str, reporter):
     #Lexer
     lexer = Lexer(code, reporter)
     tokens = lexer.tokenize()
+    
+    if reporter.has_errors():
+        reporter.display()
+        reporter.clear_list_error()
+        return
+    
+    the_normalizer = TheNormalizer(tokens, reporter)
+    tokens = the_normalizer.normalizer()
     
     if reporter.has_errors():
         reporter.display()

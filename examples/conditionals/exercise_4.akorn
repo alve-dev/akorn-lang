@@ -1,0 +1,16 @@
+// Conditionals - Exercise 4: Comprobacion de par o impar
+
+let int n = readInt("Digite un numero entero -> ");
+
+if n == 0
+{
+    write("El numero es cero");
+}
+elif n % 2 == 0
+{
+    write("El numero es par");
+}
+else
+{
+    write("El numero es impar");
+}

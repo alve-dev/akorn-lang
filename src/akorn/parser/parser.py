@@ -7,144 +7,149 @@ class Parser:
     def __init__(self, tokens:list[Token], reporter: ErrorReporter) -> None:
         self.tokens: list[Token] = tokens
         self.position = 0
-        self.current_token: Token = self.tokens[self.position] if tokens else Token(TokenType.EOF, None, 0, 0)
         self.length_list = len(self.tokens)
         self.reporter = reporter
 
 
-    def stop(self):
-        raise Exception
-
-
-    def eat(self, expected_token:TokenType) -> None:
-        if self.current_token.type == expected_token:
-            self.position += 1
-            if self.position < self.length_list:
-                self.current_token = self.tokens[self.position]
-        else:
-            line = self.current_token.line
-            col = self.current_token.column
-            expected = expected_token.value
-            get = self.current_token.value
-            
-            self.reporter.add_error(
-                f"[ParserError][line: {line}, col: {col}] Parser found something unexpected (expected: {expected} , get: {get})"
-                )
-            self.stop()
-            
-            
-            if self.position < self.length_list:
-                self.current_token = self.tokens[self.position]
-    
-    
     def at_end(self) -> bool:
-        return self.current_token.type == TokenType.EOF
-    
-    
-    def peek(self, expected_token: TokenType | list[TokenType]) -> bool:
-        if self.position + 1 >= self.length_list:
-            return False
-        
-        next_token = self.tokens[self.position + 1]
-        if isinstance(expected_token, list):
-            for token_type in expected_token:
-                if next_token.type == token_type:
-                    return True
-            
-            return False
-        else:
-            return next_token.type == expected_token
+        return self.tokens[self.position].type == TokenType.EOF
 
 
-    def peek_value(self) -> str:
-        if self.position + 1 >= self.length_list:
-            return ""
+    def advance(self) -> bool:
+        if self.at_end():
+            return False
         
-        next_token = self.tokens[self.position + 1]
-        return f"'{next_token.value}'"
+        self.position += 1
+        return True
+
+
+    def synchronize(self):
+        while not self.at_end():
+            if self.peek_token(0).type == TokenType.SEMICOLON:
+                return
+        
+            match self.peek_token(0).type:
+                case TokenType.VAR : return
+                case TokenType.LET : return
+                case TokenType.IDENT : return
+                case TokenType.IF : return
+                case TokenType.WHILE : return
+                case TokenType.LOOP : return
+                case _: pass
+                
+            self.advance()            
+    
+
+    def peek_token(self, step) -> Token:
+        if self.position + step >= self.length_list:
+            return None
+        
+        return self.tokens[self.position + step]
+
+
+    #Seguir mañana y arreglar los comentarios de errores en las lines e columnas
+
+    def line(self) -> int:
+        if self.at_end:
+            return self.peek_token(-1).line
+        return self.peek_token(0).line
+    
+    
+    def column(self) -> int:
+        if self.at_end:
+            return self.peek_token(-1).column
+        return self.peek_token(0).column
+    
+    
+    def check(self, type: TokenType) -> bool:
+        if self.at_end(): 
+            return False
+    
+        return self.peek_token(0).type == type
+
+
+    def match_token_type(self, *types) -> bool:
+        for type in types:
+            if self.check(type):
+                self.advance()
+                return True
+        
+        return False
+
+
+    def declare_error(self, message):
+        self.reporter.add_error(
+                f"[ParserError][line: {self.line()}, col: {self.column()}] {message}"
+            )
+        self.synchronize()
+
+
+    def eat(self, type: TokenType, message: str) -> bool:
+        if not self.match_token_type(type):
+            self.declare_error(message)
+            return False
+        
+        return True
     
     
     def parse_statement(self, scope: Enviroment) -> Node:
+        none_aux = NoneNode(self.line(), self.column())
+        
         #Declaracion de variables
-        AKON_TYPES = [TokenType.INT, TokenType.FLOAT, TokenType.STRING, TokenType.BOOL]
-        if self.current_token.type in [TokenType.VAR, TokenType.LET]:
-            if self.peek(AKON_TYPES):
+        if self.match_token_type(TokenType.VAR, TokenType.LET):
+            if self.match_token_type(TokenType.INT, TokenType.FLOAT, TokenType.STRING, TokenType.BOOL):
                 constant: bool = False
                 
-                if self.current_token.type == TokenType.LET:
+                if self.peek_token(-2).type == TokenType.LET:
                     constant = True
             
-                self.eat(self.current_token.type)
-                
-                data_type = self.current_token.value
-                self.eat(self.current_token.type)
+                data_type = self.peek_token(-1).value
                 
                 return self.parse_declaration(data_type, constant, scope)
             
             else:
-                line = self.current_token.line
-                col = self.current_token.column
-                expected = "DATA_TYPE"
-                get = self.peek_value()
-                
-                self.reporter.add_error(
-                    f"[ParserError][line: {line}, col: {col}] Strange sentence found, perhaps you meant to make a variable declaration?(Expected: {expected}, Get:{get})"
-                )
-                self.stop()
-
-        elif self.current_token.type in AKON_TYPES:
-            line = self.current_token.line
-            col = self.current_token.column
-            
-            self.reporter.add_error(
-                f"[ParserError][line: {line}, col: {col}]Incorrect variable declaration, remember to use the keyword 'var' or 'let' at the beginning of a declaration and before the data type (e.g., 'int')"
-            )
-            self.stop()
+                self.declare_error("The variable declaration attempt failed; the variable's data type was missing after the mutated type.")
+                return none_aux
         
         #Asignacion de variables o llamado a funcion
-        elif self.current_token.type == TokenType.IDENT:
-            if self.peek(TokenType.LPAREN):
+        elif self.match_token_type(TokenType.IDENT):
+            if self.match_token_type(TokenType.LPAREN):
                 return self.parse_call_function(scope)
             else:
                 return self.parse_assignment(scope)
             
-        #If-Elif-Else
-        elif self.current_token.type == TokenType.IF:
+        #If Statement
+        elif self.match_token_type(TokenType.IF):
             return self.parse_if_statement(scope)
 
-        elif self.current_token.type == TokenType.WHILE:
+        # While Statement
+        elif self.match_token_type(TokenType.WHILE):
             return self.parse_while_statement(scope, False)
         
-        elif self.current_token.type == TokenType.LOOP:
+        # Loop Statement
+        elif self.match_token_type(TokenType.LOOP):
             return self.parse_while_statement(scope, True)
         
-        elif self.current_token.type == TokenType.BREAK:
-            self.eat(TokenType.BREAK)
+        # Break Statement
+        elif self.match_token_type(TokenType.BREAK):
             return BreakStatement()
 
-        elif self.current_token_token.type == TokenType.BREAK:
-            self.eat(TokenType.CONTINUE)
+        # Continue Statement
+        elif self.match_token_type(TokenType.CONTINUE):
             return ContinueStatement()
-        
+            
         #Algo extraño
         else:
-            line = self.current_token.line
-            col = self.current_token.column
-            
-            self.reporter.add_error(
-                f"[ParserError][line: {line}, col: {col}] Unexpected syntax error"
-            )
-            self.stop()
+            self.declare_error("Unexpected syntax error")
+            return none_aux
             
             
-    def valid_var(self, var_name: str, data_type: str, constant: bool, var_value: Node, line: int, column: int, scope: Enviroment) -> bool | None:
+    def valid_var(self, var_name: str, data_type: str, constant: bool, var_value: Node, scope: Enviroment) -> bool | None:
         if scope.define_var(var_name, data_type, constant, var_value):
             return True
         else:
-            self.reporter.add_error(
-                f"[DeclarationError][line: {line}, col: {column}] You tried to redeclare an existing variable in scope, '{var_name}'"
-            )
-            self.stop()
+            self.declare_error(f"You tried to redeclare an existing variable in scope, '{var_name}'")
+            return False
             
 
     def parse_declaration(self, data_type: str, constant: bool, scope: Enviroment) -> list[DeclarationNode]:
@@ -152,154 +157,137 @@ class Parser:
         
         declarations = [node]
         #Posible multi-Declaration sino single-declaration
-        if self.current_token.type == TokenType.COMMA:
+        if self.match_token_type(TokenType.COMMA):
             
-            #Hay ident despues de la coma?, sino es error
-            if self.peek(TokenType.IDENT):
-                self.eat(TokenType.COMMA)
-                for declaration in self.parse_declaration(data_type, constant, scope):
-                    declarations.append(declaration)
-                    
-            else:
-                line = self.current_token.line
-                col = self.current_token.column
-                
-                self.reporter.add_error(
-                    f"[MultiDeclarationError][line: {line}, col: {col}] Possible attempt at multi-declaration of variables, and an ident was needed after the comma"
-                )
-                self.stop()
+            for declaration in self.parse_declaration(data_type, constant, scope):
+                declarations.append(declaration)
             
         return declarations
     
 
     def parse_single_declaration(self, data_type: str, constant: bool, scope: Enviroment) -> DeclarationNode:
         #Locacion de la declaracion
-        line_declaration = self.current_token.line
-        column_declaration = self.current_token.column
+        none_aux = NoneNode(self.line(), self.column())
         
-        var_name = self.current_token.value
-        self.eat(TokenType.IDENT)
+        if not self.eat(TokenType.IDENT, "Variable declaration attempt failed, identifier not declared"):
+            return none_aux
+        
+        var_name = self.peek_token(-1).value
         
         #Es declaracion + asignacion?
-        if self.current_token.type == TokenType.ASSIGN:
-            self.eat(TokenType.ASSIGN)
+        if self.match_token_type(TokenType.ASSIGN):
             var_value = self.expression(scope)
-            self.valid_var(var_name, data_type, constant, var_value, line_declaration, column_declaration, scope)
-            return DeclarationNode(var_name, data_type, var_value)
-                        
-        #Es declaracion sin asignacion o posible multi-declaration?
-        elif self.current_token.type == TokenType.SEMICOLON or self.current_token.type == TokenType.COMMA:
-            var_value = NoneNode(self.current_token.line, self.current_token.column)
-            self.valid_var(var_name, data_type, constant, var_value, line_declaration, column_declaration, scope)
-            return DeclarationNode(var_name, data_type, var_value)
-        
-        #Es una declaracion invalida
+        elif self.check(TokenType.SEMICOLON) or self.check(TokenType.COMMA):
+            var_value = none_aux
         else:
-            expected = "'=' | ';' | ','"
-            get = self.current_token.value
-            
-            self.reporter.add_error(
-                f"[ParserError][line: {line_declaration}, col: {column_declaration}] Invalid variable declaration attempt. (expected: {expected}, get: {get})"
-            )
-            self.stop()
-
+            self.declare_error("Variable declaration attempt failed; neither assignment operator ('=') for initialization \nnor semicolon (';') to terminate the statement with an empty declaration was found.")
+            return none_aux
+        
+        if self.valid_var(var_name, data_type, constant, var_value, scope):
+            return DeclarationNode(var_name, data_type, var_value)
+        else:
+            return none_aux
+        
          
     def parse_assignment(self, scope) -> AssignmentNode:
-        var_name = self.current_token.value
-        self.eat(TokenType.IDENT)
+        var_name = self.peek_token(-1).value
+        none_aux = NoneNode(self.line(), self.column())
         
-        if self.current_token.type == TokenType.ASSIGN:
-            self.eat(TokenType.ASSIGN)
+        if self.match_token_type(TokenType.ASSIGN):
             var_value = self.expression(scope)
+            
+        elif self.match_token_type(TokenType.PLUS_ASSIGN):
+            var_value = BinaryOpNode(
+                VariableNode(var_name, self.line(), self.column()),
+                "+",
+                self.expression(scope)
+            )
+        
+        elif self.match_token_type(TokenType.MINUS_ASSIGN):
+            var_value = BinaryOpNode(
+                VariableNode(var_name, self.line(), self.column()),
+                "-",
+                self.expression(scope)
+            )
+        
+        elif self.match_token_type(TokenType.STAR_ASSIGN):
+            var_value = BinaryOpNode(
+                VariableNode(var_name, self.line(), self.column()),
+                "*",
+                self.expression(scope)
+            )
+        
+        elif self.match_token_type(TokenType.SLASH_ASSIGN):
+            var_value = BinaryOpNode(
+                VariableNode(var_name, self.line(), self.column()),
+                "/",
+                self.expression(scope)
+            )
+        
+        elif self.match_token_type(TokenType.DOUBLE_STAR_ASSIGN):
+            var_value = BinaryOpNode(
+                VariableNode(var_name, self.line(), self.column()),
+                "**",
+                self.expression(scope)
+            )
+        
+        elif self.match_token_type(TokenType.MOD_ASSIGN):
+            var_value = BinaryOpNode(
+                VariableNode(var_name, self.line(), self.column()),
+                "%",
+                self.expression(scope)
+            )
+                
         else:
-            compuest_signs = [TokenType.PLUS_ASSIGN, TokenType.MINUS_ASSIGN, TokenType.STAR_ASSIGN, TokenType.SLASH_ASSIGN,
-                            TokenType.DOUBLE_STAR_ASSIGN, TokenType.MOD_ASSIGN]
-            if self.current_token.type in compuest_signs:
-                operator: str = None
-                
-                if self.current_token.type == TokenType.PLUS_ASSIGN:
-                    operator = '+'
-                elif self.current_token.type == TokenType.MINUS_ASSIGN:
-                    operator = '-'
-                elif self.current_token.type == TokenType.STAR_ASSIGN:
-                    operator = '*'
-                elif self.current_token.type == TokenType.SLASH_ASSIGN:
-                    operator = '/'
-                elif self.current_token.type == TokenType.DOUBLE_STAR_ASSIGN:
-                    operator = '**'
-                elif self.current_token.type == TokenType.MOD_ASSIGN:
-                    operator = '%'
-                
-                self.eat(self.current_token.type)
-                var_value = BinaryOpNode(
-                    VariableNode(var_name, self.current_token.line, self.current_token.column),
-                    operator,
-                    self.expression(scope)
-                    )
+            self.declare_error("The attempt to assign to a variable failed; the common assignment operator or compound assignment operator was not found.")
+            return none_aux
         
         if scope.assignment_var(var_name, var_value):
-            return AssignmentNode(var_name, var_value)
+            return AssignmentNode(var_name, var_value)    
         else:
-            line = self.current_token.line 
-            col = self.current_token.column
-            
-            self.reporter.add_error(
-                f"[NameError][line: {line}, col: {col}] You tried to access a non-existent variable, '{var_name}'"
-            )
-            self.stop()
+            self.declare_error(f"Variable assignment attempt failed, variable '{var_name}' does not exist")
+            return none_aux
             
 
-    def parse_call_function(self, scope) -> CallNode:
-        call_name = self.current_token.value
-        self.eat(TokenType.IDENT)
-        self.eat(TokenType.LPAREN)
+    def parse_call_function(self, scope) -> CallNode | NoneNode:
+        call_name = self.peek_token(-2).value
         call_args = []
         
         while True:
             current_arg = self.expression(scope)
             call_args.append(current_arg)
-            if self.current_token.type == TokenType.COMMA:
-                self.eat(TokenType.COMMA)
+            if self.match_token_type(TokenType.COMMA):
                 continue
-            elif self.current_token.type == TokenType.RPAREN:
-                self.eat(TokenType.RPAREN)
+            elif self.match_token_type(TokenType.RPAREN):
                 break
             else:
-                line = self.current_token.line
-                col = self.current_token.column
-                
-                self.reporter.add_error(
-                    f"[ParserError][line: {line}, col: {col}] Attempt to call '{call_name}' function failed"
-                )
-                self.stop()
+                self.declare_error("The function call failed; I needed closing parenthesis ')' or ',' to continue providing arguments.")
+                return NoneNode(self.line(), self.column())
                 
         return CallNode(call_name, call_args)
             
             
     def parse_if_statement(self, scope: Enviroment) -> IfNode:
         branches = []
-    
+        
         #Condition
-        self.eat(TokenType.IF)
         condition = self.expression(scope)
         
         block = self.parse_block(scope)
         branches.append((condition, block))
         
-        while self.current_token.type == TokenType.ELIF:
-            self.eat(TokenType.ELIF)
+        while self.match_token_type(TokenType.ELIF):
             condition = self.expression(scope)
             
             block = self.parse_block(scope)
             branches.append((condition, block))
 
-        if self.current_token.type == TokenType.ELSE:
-            self.eat(TokenType.ELSE)
+        if self.match_token_type(TokenType.ELSE):
             block = self.parse_block(scope)
             else_node = ElseNode(block)
             
         else:
-            else_node = NoneNode(self.current_token.line, self.current_token.column)
+            else_node = NoneNode(self.line(), self.column())
             
         
         return IfNode(branches, else_node)        
@@ -307,10 +295,8 @@ class Parser:
     
     def parse_while_statement(self, scope: Enviroment, loop: bool) -> WhileNode:
         if loop:
-            self.eat(TokenType.LOOP)
             cond = BoolNode(True, self.current_token.line, self.current_token.column)
         else:
-            self.eat(TokenType.WHILE)
             cond = self.expression(scope)
             
         block = self.parse_block(scope)
@@ -318,25 +304,24 @@ class Parser:
         return WhileNode(cond, block)
     
     
-    def parse_block(self, scope: Enviroment):
-        line_block = self.current_token.line
-        column_block = self.current_token.column
-        self.eat(TokenType.LBRACE)
+    def parse_block(self, scope: Enviroment) -> BlockNode | NoneNode:
+        none_aux = NoneNode(self.line(), self.column())
+        
+        if not self.eat(TokenType.LBRACE, "Attempt at statement with code block failed, opening block '{' could not be found"):
+            return none_aux
+            
         scope_block = Enviroment(scope)
         statements = []
         
         while True:
-            if self.current_token.type == TokenType.SEMICOLON:
-                self.eat(TokenType.SEMICOLON)
+            if self.match_token_type(TokenType.SEMICOLON):
+                continue
 
             if self.at_end():
-                self.reporter.add_error(
-                    f"[ParserError][line: {line_block}, col: {column_block}] " + "A '}' is expected when closing a statement."
-                )
-                self.stop()
+                self.declare_error("Attempt at statement with code block failed, block closure '}' not found")
+                return none_aux
                 
-            if self.current_token.type == TokenType.RBRACE:
-                self.eat(TokenType.RBRACE)
+            if self.match_token_type(TokenType.RBRACE):
                 break
             
             node = self.parse_statement(scope_block)
@@ -353,9 +338,10 @@ class Parser:
     def parse_program(self) -> ProgramNode:
         statements: list[Node] = []
         scope = Enviroment()
-        while not self.at_end():
-            if self.current_token.type == TokenType.SEMICOLON:
-                self.eat(TokenType.SEMICOLON)
+        
+        while True:
+            if self.match_token_type(TokenType.SEMICOLON):
+                continue
                 
             if self.at_end():
                 break
@@ -372,40 +358,50 @@ class Parser:
         
         
     def expression(self, scope) -> Node:
-        return self.not_boolean_expr(scope)
+        return self.or_expr(scope)
+    
+
+    def or_expr(self, scope) -> Node:
+        node = self.and_expr(scope)
+        
+        while self.match_token_type(TokenType.OR):
+            node = BooleanOpNode(node, "or", self.or_expr(scope))
+        
+        return node
+    
+    
+    def and_expr(self, scope) -> Node:
+        node = self.not_boolean_expr(scope)
+        
+        while self.match_token_type(TokenType.AND):
+            node = BooleanOpNode(node, "and", self.and_expr(scope))
+            
+        return node
     
     
     def not_boolean_expr(self, scope) -> Node:
-        if self.current_token.type == TokenType.NOT:
-            self.eat(TokenType.NOT)
+        if self.match_token_type(TokenType.NOT):
             node = NotBooleanNode(self.not_boolean_expr(scope))
         else:
-            node = self.boolean_expr(scope)
+            node = self.equality_expr(scope)
             
         return node
 
 
-    def boolean_expr(self, scope) -> Node:
+    def equality_expr(self, scope) -> Node:
         node = self.comp_expr(scope)
         
-        while self.current_token.type in [TokenType.AND, TokenType.OR]:
-            operator = self.current_token.value
-            self.eat(self.current_token.type)
-            node = BooleanOpNode(node, operator, self.expression(scope))
-        
+        while self.match_token_type(TokenType.EQUAL, TokenType.DIFERENT):
+            node = ComparisonOpNode(node, self.peek_token(-1).value, self.equality_expr(scope))
+            
         return node
 
 
     def comp_expr(self, scope) -> Node:
         node = self.add_expr(scope)
         
-        sign_comparison = [TokenType.GREATER, TokenType.LESS, TokenType.GREATER_EQUAL, TokenType.LESS_EQUAL,
-                           TokenType.EQUAL, TokenType.DIFERENT]
-        
-        while self.current_token.type in sign_comparison:
-            operator = self.current_token.value
-            self.eat(self.current_token.type)
-            node = ComparisonOpNode(node, operator, self.comp_expr(scope))
+        while self.match_token_type(TokenType.GREATER, TokenType.LESS, TokenType.GREATER_EQUAL, TokenType.LESS_EQUAL):
+            node = ComparisonOpNode(node, self.peek_token(-1).value, self.comp_expr(scope))
         
         return node    
         
@@ -413,11 +409,8 @@ class Parser:
     def add_expr(self, scope) -> Node:
         node = self.mult_expr(scope)
         
-        while self.current_token.type in [TokenType.PLUS, TokenType.MINUS]:
-            op = self.current_token.value
-            token_type = self.current_token.type
-            self.eat(token_type)            
-            node = BinaryOpNode(node, op, self.mult_expr(scope))
+        while self.match_token_type(TokenType.PLUS, TokenType.MINUS):
+            node = BinaryOpNode(node, self.peek_token(-1).value, self.mult_expr(scope))
             
         return node
     
@@ -425,22 +418,15 @@ class Parser:
     def mult_expr(self, scope) -> Node:
         node = self.unary_expr(scope)
         
-        while self.current_token.type in [TokenType.STAR, TokenType.SLASH, TokenType.MOD]:
-            op = self.current_token.value
-            token_type = self.current_token.type
-            self.eat(token_type)
-            node = BinaryOpNode(node, op, self.mult_expr(scope))
+        while self.match_token_type(TokenType.STAR, TokenType.SLASH, TokenType.MOD):
+            node = BinaryOpNode(node, self.peek_token(-1).value, self.mult_expr(scope))
             
         return node
     
     
     def unary_expr(self, scope) -> Node:
-        if self.current_token.type in [TokenType.PLUS, TokenType.MINUS]:
-            operator = self.current_token.value
-            token_type = self.current_token.type
-            self.eat(token_type)
-            node = UnaryNode(operator, self.unary_expr(scope))
-            
+        if self.match_token_type(TokenType.PLUS, TokenType.MINUS):
+            node = UnaryNode(self.peek_token(-1), self.unary_expr(scope))
         else:
             node = self.power_expr(scope)
             
@@ -450,76 +436,63 @@ class Parser:
     def power_expr(self, scope) -> Node:
         node = self.primitive(scope)
         
-        while self.current_token.type == TokenType.DOUBLE_STAR:
-            op = "**"
-            self.eat(TokenType.DOUBLE_STAR)
-            node = BinaryOpNode(node, op, self.power_expr(scope))
+        while self.match_token_type(TokenType.DOUBLE_STAR):
+            node = BinaryOpNode(node, "**", self.power_expr(scope))
             
         return node
     
     
     def primitive(self, scope) -> Node:
+        none_aux = NoneNode(self.line(), self.column())
+        
         # Is a NUMBER?
-        if self.current_token.type == TokenType.NUMBER:
-            if isinstance(self.current_token.value, float):
-                node = FloatNode(self.current_token.value, self.current_token.line, self.current_token.column)
-            else:
-                node = IntNode(self.current_token.value, self.current_token.line, self.current_token.column)
+        if self.match_token_type(TokenType.NUMBER):
+            current_token = self.peek_token(-1)
             
-            self.eat(TokenType.NUMBER)
+            if isinstance(current_token.value, float):
+                node = FloatNode(current_token.value, current_token.line, current_token.column)
+            else:
+                node = IntNode(current_token.value, current_token.line, current_token.column)
+            
             return node
 
         # is a STRING_LITERAL
-        if self.current_token.type == TokenType.STRING_LITERAL:
-            node = StringNode(self.current_token.value, self.current_token.line, self.current_token.column)
-            self.eat(TokenType.STRING_LITERAL)
+        if self.match_token_type(TokenType.STRING_LITERAL):
+            current_token = self.peek_token(-1)
+            node = StringNode(current_token.value, current_token.line, current_token.column)
             return node
+                        
+       # is a bool
+        if self.match_token_type(TokenType.TRUE):
+            return BoolNode(True, self.line(), self.column())
         
-        # is a bool
-        if self.current_token.type == TokenType.TRUE:
-            self.eat(TokenType.TRUE)
-            return BoolNode(True, self.current_token.line, self.current_token.column)
-        if self.current_token.type == TokenType.FALSE:
-            self.eat(TokenType.FALSE)
-            return BoolNode(False, self.current_token.line, self.current_token.column)
+        if self.match_token_type(TokenType.FALSE):
+            return BoolNode(False, self.line(), self.column())
         
         #is a None value
-        if self.current_token.type == TokenType.NONE:
-            self.eat(TokenType.NONE)
-            return NoneNode(self.current_token.line, self.current_token.column)
+        if self.match_token_type(TokenType.NONE):
+            return none_aux
         
         # Is a LPAREN?
-        if self.current_token.type == TokenType.LPAREN:
-            self.eat(TokenType.LPAREN)
+        if self.match_token_type(TokenType.LPAREN):
             node = self.expression(scope)
-            self.eat(TokenType.RPAREN)
+            if not self.eat(TokenType.RPAREN, "Priority exploitation attempt failed, parenthesis lock ')' not found"):
+                return none_aux
             return node
         
         #Is a identifier?
-        elif self.current_token.type == TokenType.IDENT:
-            if self.peek(TokenType.LPAREN):
+        elif self.match_token_type(TokenType.IDENT):
+            if self.match_token_type(TokenType.LPAREN):
                 return self.parse_call_function(scope)
             else:
-                if scope.lookup_var(self.current_token.value):
-                    node = VariableNode(self.current_token.value, self.current_token.line, self.current_token.column)
-                    self.eat(TokenType.IDENT)
+                variable_token = self.peek_token(-1)
+                if scope.lookup_var(variable_token.value):
+                    node = VariableNode(variable_token.value, variable_token.line, variable_token.column)
                     return node
                 else:
-                    line = self.current_token.line
-                    col = self.current_token.column
-                    name = self.current_token.value
-                    
-                    self.reporter.add_error(
-                        f"[NameErrorAkorn][line: {line}, col: {col}] You tried to access a non-existent variable, '{name}'"
-                    )
-                self.stop()
+                    self.declare_error(f"Attempt to use variable failed, variable '{variable_token.value}' was not found")
+                    return none_aux
                 
-        else:
-            line = self.current_token.line
-            col = self.current_token.column
-            
-            self.error_reporter.add_error(
-                f"[ParserError][line: {line}, col: {col}] Unexpected primitive"
-            )
-            self.eat(self.current_token.type)
+        self.declare_error("Unexpected primitive")
+        return none_aux
             

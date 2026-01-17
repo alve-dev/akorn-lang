@@ -1,13 +1,13 @@
 // Ejercicio 12: Panaderia
 
-// Descuento
-let float price = 3.49;
-let float discount = price * (1 - 0.6);
+// Descuentoq
+let float price = 3.49
+let float discount = price * (1 - 0.6)
 
 // Cantidad de barras vendidas
-let int bread_sold = readInt("¿Cuantas barras de pan se han vendido hoy?: ");
+let int bread_sold = readInt("¿Cuantas barras de pan se han vendido hoy?: ")
 
 // Imprimir los resultados
-write("Costo habitual:", price);
-write("El descuento es:", 0.6 * 100);
-write("El total a pagar es:", bread_sold * discount);
+write("Costo habitual:", price)
+write("El descuento es:", 0.6 * 100)
+write("El total a pagar es:", bread_sold * discount)

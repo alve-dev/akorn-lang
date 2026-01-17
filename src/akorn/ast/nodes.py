@@ -2,14 +2,17 @@ class Node:
     def __repr__() -> str:
         return f"<{__class__.__name__}>"
 
+
 class NoneValue:
     """Null value of akon"""
     
     def __repr__(self):
         return f"<{__class__.__name__}"
 
+
 AKORN_NONE = NoneValue()
-  
+
+
 class NoneNode(Node):
     def __init__(
         self,
@@ -24,6 +27,7 @@ class NoneNode(Node):
         
     def __repr__(self):
         return f"{__class__.__name__}"
+  
         
 class LiteralNode(Node):
     def __init__(
@@ -36,6 +40,7 @@ class LiteralNode(Node):
         self.value = value
         self.line = line
         self.column = column
+
 
 class IntNode(LiteralNode):
     def __init__(
@@ -53,6 +58,7 @@ class IntNode(LiteralNode):
     def __repr__(self) -> str:
         return f"<{__class__.__name__} value={self.value}>"
 
+
 class FloatNode(LiteralNode):
     def __init__(
         self,
@@ -68,6 +74,7 @@ class FloatNode(LiteralNode):
         
     def __repr__(self) -> str:
         return f"<{__class__.__name__} value={self.value}>"
+
 
 class StringNode(LiteralNode):
     def __init__(
@@ -85,6 +92,7 @@ class StringNode(LiteralNode):
     def __repr__(self):
         return f'<{__class__.__name__} value="{self.value}">'
 
+
 class BoolNode(LiteralNode):
     def __init__(
         self,
@@ -101,6 +109,7 @@ class BoolNode(LiteralNode):
     def __repr__(self):
         return f"<{__class__.__name__} value={self.value}>"
 
+
 class UnaryNode(Node):
     def __init__(
         self,
@@ -114,6 +123,7 @@ class UnaryNode(Node):
     def __repr__(self) -> str:
         return f"<{__class__.__name__} operator={self.operator} value={self.node})>"
 
+
 class NotBooleanNode(Node):
     def __init__(
         self,
@@ -121,11 +131,10 @@ class NotBooleanNode(Node):
         ) -> None:
         
         self.node = node
-        self.line: int = node.line
-        self.column: int = node.column
         
     def __repr__(self):
         return f"<{__class__.__name__} value={self.node}"
+
 
 class BooleanOpNode(Node):
     def __init__(
@@ -141,6 +150,7 @@ class BooleanOpNode(Node):
         
     def __repr__(self):
         return f"<{__class__.__name__} left={self.left} operator={self.operator}, right={self.right}"
+
 
 class ComparisonOpNode(Node):
     def __init__(
@@ -159,6 +169,7 @@ class ComparisonOpNode(Node):
     def __repr__(self):
         return f"<{__class__.__name__} left={self.left} operator={self.operator} right={self.right}"
 
+
 class BinaryOpNode(Node):
     def __init__(
         self,
@@ -176,6 +187,7 @@ class BinaryOpNode(Node):
     def __repr__(self) -> str:
         return f"<{__class__.__name__} left={self.left} operator={self.operator} right={self.right}>"
 
+
 class VariableNode(Node):
     def __init__(
         self,
@@ -190,6 +202,7 @@ class VariableNode(Node):
     
     def __repr__(self) -> str:
         return f"<{__class__.__name__} name={self.name}>"
+  
         
 class AssignmentNode(Node):
     def __init__(
@@ -203,6 +216,7 @@ class AssignmentNode(Node):
         
     def __repr__(self) -> str:
         return f"<{__class__.__name__} name={self.name} value={self.value}>"
+
 
 class DeclarationNode(Node):
     def __init__(
@@ -219,6 +233,7 @@ class DeclarationNode(Node):
     def __repr__(self):
         return f"<{__class__.__name__} type={self.type} name={self.name} value={self.value}>"
 
+
 class ElseNode(Node):
     def __init__(
         self,
@@ -229,7 +244,8 @@ class ElseNode(Node):
         
     def __repr__(self):
         return f"<{__class__.__name__} statements={self.block}"
-    
+  
+  
 class IfNode(Node):
     def __init__(
         self,
@@ -243,13 +259,16 @@ class IfNode(Node):
     def __repr__(self):
         return f"<{__class__.__name__} branches={self.branches} else={self.else_node}>"
 
+
 class BreakStatement(Node):
     def __repr__():
         return f"<{__class__.__name__}"
 
+
 class ContinueStatement(Node):
     def __repr__():
         return f"<{__class__.__name__}>"
+
 
 class WhileNode(Node):
     def __init__(
@@ -264,6 +283,7 @@ class WhileNode(Node):
         
     def __repr__(self) -> str:
         return f"<{__class__.__name__}, condition={self.condition}>"
+   
              
 class CallNode(Node):
     def __init__(
@@ -278,6 +298,7 @@ class CallNode(Node):
     def __repr__(self):
         return f"<{__class__.__name__} calle={self.calle} args={self.args}"
 
+
 class BlockNode(Node):
     def __init__(
         self,
@@ -290,6 +311,7 @@ class BlockNode(Node):
         
     def __repr__(self):
         return f"{__class__.__name__} statements={self.statements} scope={self.scope}"
+
 
 class ProgramNode(Node):
     def __init__(

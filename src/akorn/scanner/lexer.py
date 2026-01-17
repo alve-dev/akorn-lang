@@ -33,13 +33,17 @@ class Lexer:
         self.tokens_array: list[Token] = [] 
         self.reporter: ErrorReporter = reporter
 
+
     def advance(self, step: int) -> None:
         self.position += step
         self.column += step
     
+    
     def reset_line(self) -> None:
+        self.tokens_array.append(Token(TokenType.NEWLINE, "\\n", self.column, self.line))
         self.line += 1
         self.column = 1
+     
         
     def peek(self, step: int) -> str:
         """peek(0) == actual character
@@ -51,9 +55,11 @@ class Lexer:
         
         return self.code[self.position + step]
 
+
     def scan_single_comment(self) -> None:
         while (self.position < self.code_length and self.peek(0) != '\n'):
             self.advance(1)
+
 
     def scan_multi_comment(self) -> None:
         success: bool = False
@@ -82,6 +88,7 @@ class Lexer:
         
         self.advance(1)
     
+    
     def scan_literal_number(self) -> None:
         start_position: int = self.position
         is_decimal: bool = False
@@ -102,6 +109,7 @@ class Lexer:
         else:
             self.tokens_array.append(Token(TokenType.NUMBER, int(numero_completo), self.column, self.line))
     
+    
     def scan_identifier_or_keyword(self) -> None:
         start_position = self.position
                                 
@@ -118,6 +126,7 @@ class Lexer:
         else:
             self.tokens_array.append(Token(TokenType.IDENT, full_identifier, self.column, self.line))
 
+
     def scan_literal_string(self) -> None:
         start_quotes: str = self.peek(0)
         start_position = self.position
@@ -128,7 +137,6 @@ class Lexer:
             if self.peek(0) == '\n':
                 self.advance(1)
                 self.reset_line()
-                continue
             else:
                 if self.peek(0) == start_quotes:
                     self.advance(1)
@@ -149,9 +157,10 @@ class Lexer:
                 temporal_string = temporal_string.replace("\\n", "\n")
             if "\\t" in temporal_string:
                 temporal_string = temporal_string.replace("\\t", "\t")
-                    
+            
             self.tokens_array.append(Token(TokenType.STRING_LITERAL, temporal_string, self.column, self.line))
-    
+            
+            
     def tokenize(self) -> list[Token]:
         while self.position < self.code_length:
              
@@ -287,14 +296,14 @@ class Lexer:
             #Literals numbers
             elif self.peek(0).isdigit():
                 self.scan_literal_number()
+                
+            #Strings
+            elif self.peek(0) == "\"" or self.peek(0) == "'":
+                self.scan_literal_string()
             
             #Identifiers or keywords
             elif self.peek(0).isalpha():
                 self.scan_identifier_or_keyword()
-                
-            #Strings
-            elif self.peek(0) == "\"" or self.peek(0) == "\'":
-                self.scan_literal_string()
             
             else:
                 self.reporter.add_error(
@@ -304,5 +313,4 @@ class Lexer:
               
         self.tokens_array.append(Token(TokenType.EOF, None, 0, 0))
         return self.tokens_array
-
 

@@ -1,10 +1,10 @@
-# Akon Programming Language (Akon)
+# Akorn Programming Language (Akorn)
 
 ## Overview
 
-**Akon** is a programming language designed and implemented by a single developer with a strong appreciation for both **C** and **Python**. The primary objective of Akon is to combine the best aspects of low-level and high-level programming: the performance and control of C with the expressiveness and productivity of Python.
+**Akorn** is a programming language designed and implemented by a single developer with a strong appreciation for both **C** and **Python**. The primary objective of Akorn is to combine the best aspects of low-level and high-level programming: the performance and control of C with the expressiveness and productivity of Python.
 
-In the long term, Akon is intended to specialize in **Machine Learning** and **Robotics**, providing safe high-level abstractions by default while still allowing explicit low-level control when required.
+In the long term, Akorn is intended to specialize in **Machine Learning** and **Robotics**, providing safe high-level abstractions by default while still allowing explicit low-level control when required.
 
 ---
 
@@ -34,7 +34,7 @@ In the long term, Akon is intended to specialize in **Machine Learning** and **R
 - **Prototype (current):** Imperative
 - **Planned official version (1.0):** Multi-paradigm
 
-Akon is designed for both **systems-level performance** and **data science agility**. It uses a **trait-based composition model**, eliminating classical inheritance overhead while preserving expressiveness and composability.
+Akorn is designed for both **systems-level performance** and **data science agility**. It uses a **trait-based composition model**, eliminating classical inheritance overhead while preserving expressiveness and composability.
 
 ---
 
@@ -51,7 +51,7 @@ Akon is designed for both **systems-level performance** and **data science agili
 - No classes
 - Uses **structs + traits**
 - Object access syntax similar to Python (`object.method()`)
-- Minimal verbosity (unlike Java)
+- Minimal verbosity
 - Structured and readable syntax inspired by C
 
 ---
@@ -86,7 +86,7 @@ Akon is designed for both **systems-level performance** and **data science agili
   UTF-8 string type
 
 - `bool`  
-  Boolean (`True` / `False`)
+  Boolean (`true` / `false`)
 
 - `array<T, S>`  
   Contiguous memory array with explicit element 
@@ -134,7 +134,7 @@ Akon is designed for both **systems-level performance** and **data science agili
 
 ### Variable Declarations
 
-```akon
+```akorn
 var int number = 10;
 var float number_float = 10.5;
 
@@ -143,15 +143,15 @@ let bigfloat big_number_float = 10.5**500;
 
 // Prefer basic int and float when possible
 
-let string language_name = "Akon";
+let string language_name = "Akorn";
 
-let array<string> languages = ["Akon", "C", "Python", "C++", "Rust"];  //This would be equivalent to a Python tuple, that is, an immutable contiguous memory array (hence let) of strings called languages
+let array<string> languages = ["Akorn", "C", "Python", "C++", "Rust"];  //This would be equivalent to a Python tuple, that is, an immutable contiguous memory array (hence let) of strings called languages
 
 let dict<string, string> developers = {
     "Guido van Rossum": "Python",
     "Bjarne Stroustrup": "C++",
     "Graydon Hoare": "Rust",
-    "Me": "Akon",
+    "Me": "Akorn",
 }; // Just like above, since it has `let` it cannot change, it's an immutable dict, which has keys of strings and values ​​of strings, and is called developers
 
 var bool in_development = True;
@@ -160,7 +160,7 @@ var bool in_development = True;
 
 ## Dynamic Variables
 
-```akon
+```akorn
 // 'dynamic' is a keyword, not a type
 
 var dynamic variable = "Hello, World"; //Note: `var` is mutable, `dynamic` can be of any type; if it were `let`, `dynamic` wouldn't make sense unless it's in prototyping.
@@ -170,7 +170,7 @@ variable = True;
 
 Dynamic typing is allowed but discouraged unless necessary. It is useful for rapid prototyping but should be used responsibly.
 
-```akon
+```akorn
 var array<dynamic> list = [1, 2, 3, "hello", "Alex", [1.5, 6.3]]; //This is equivalent to Python's `list`, an array with contiguous memory, mutable, and with dynamic values ​​inside, meaning more than one type.
 
 var dict<string, dynamic> person = {
@@ -189,7 +189,7 @@ var dict<string, dynamic> person = {
 
 ### Hello World(Block Syntax)
 
-```akon
+```akorn
 func main(void) -> int
 {
     write("Hello World");
@@ -200,20 +200,20 @@ func main(void) -> int
 
 ### Conditionals(Age Checker)
 
-```akon
+```akorn
 func main(void) -> int
 {
-    let int age = read_Int("Enter your age: ");
+    let int age = readInt("Enter your age: ");
     
-    if (age < 0)
+    if age < 0
     {
         write("Still in your mother's womb");
     }
-    elif (age >= 200)
+    elif age >= 200
     {
         write("Inmortal vampire");
     }
-    elif (age >= 18)
+    elif age >= 18
     {
         write("Adult");    
     }
@@ -228,7 +228,7 @@ func main(void) -> int
 ---
 
 ### Loops(Money, More Money)
-```akon
+```akorn
 func main(void) -> Int
 {
     var int money = 1;
@@ -236,14 +236,14 @@ func main(void) -> Int
 
     loop //"loop" is a completely infinite loop, equivalent to "while true" or "while (true)".
     {
-        print("You have", money, "dollars. Do you want to double it?");
+        write("You have", money, "dollars. Do you want to double it?");
         answer = readString("[Y/N]: ", limit=1).to_lower();
 
-        if (answer == 'y')
+        if answer == 'y'
         {
             money *= 2;        
         }
-        elif (answer == 'n')
+        elif answer == 'n'
         {
             break;
         }
@@ -259,12 +259,12 @@ func main(void) -> Int
 ---
 
 ### Funtions(Factorial)
-```akon
-func fact(int n) -> Int
+```akorn
+func fact(int n) -> int
 {
     var int product = 1;
     
-    for (i in range(1, n + 1))
+    for i in 1..n
     {
         product *= i;
     }
@@ -282,7 +282,7 @@ Akon supports both block-based `{}` syntax and identation-based syntax
 ### Hello World(Identation)
 ```akon
 func main(void) -> int:
-    print("Hello World")
+    write("Hello World")
     return 0
 ```
 ### Rules
@@ -315,9 +315,6 @@ func main(void) -> int:
     Terminate program with a critical error
 - `exit()`
     Exit program normally
-- `range()`
-    Fundamental for `for` loops; unable independenly
-
 ---
 
 ## Project Status
