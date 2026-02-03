@@ -13,4 +13,4 @@ class ErrorReporter:
             
     def display(self) -> None:
         for error in self.errors:
-            print(f"{error}")
+            print(f"{error}\n")

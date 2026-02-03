@@ -3,4 +3,4 @@
 let int n = readInt("Introduzca un numero: ");
 let int m = readInt("Introduzca otro numero: ");
 
-write(n, '/', m, '=', n / m, "resto", '=', n % m);
+writeline(n, '/', m, '=', n / m, "resto", '=', n % m);

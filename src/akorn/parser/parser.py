@@ -98,14 +98,14 @@ class Parser:
         #Declaracion de variables
         if self.match_token_type(TokenType.VAR, TokenType.LET):
             if self.match_token_type(TokenType.INT, TokenType.FLOAT, TokenType.STRING, TokenType.BOOL):
-                constant: bool = False
+                mutable: bool = True
                 
                 if self.peek_token(-2).type == TokenType.LET:
-                    constant = True
+                    mutable = False
             
                 data_type = self.peek_token(-1).value
                 
-                return self.parse_declaration(data_type, constant, scope)
+                return self.parse_declaration(data_type, mutable, scope)
             
             else:
                 self.declare_error("The variable declaration attempt failed; the variable's data type was missing after the mutated type.")
@@ -143,29 +143,21 @@ class Parser:
             self.declare_error("Unexpected syntax error")
             return none_aux
             
-            
-    def valid_var(self, var_name: str, data_type: str, constant: bool, var_value: Node, scope: Enviroment) -> bool | None:
-        if scope.define_var(var_name, data_type, constant, var_value):
-            return True
-        else:
-            self.declare_error(f"You tried to redeclare an existing variable in scope, '{var_name}'")
-            return False
-            
 
-    def parse_declaration(self, data_type: str, constant: bool, scope: Enviroment) -> list[DeclarationNode]:
-        node = self.parse_single_declaration(data_type, constant, scope)
+    def parse_declaration(self, data_type: str, mutable: bool, scope: Enviroment) -> list[DeclarationNode]:
+        node = self.parse_single_declaration(data_type, mutable, scope)
         
         declarations = [node]
         #Posible multi-Declaration sino single-declaration
         if self.match_token_type(TokenType.COMMA):
             
-            for declaration in self.parse_declaration(data_type, constant, scope):
+            for declaration in self.parse_declaration(data_type, mutable, scope):
                 declarations.append(declaration)
             
         return declarations
     
 
-    def parse_single_declaration(self, data_type: str, constant: bool, scope: Enviroment) -> DeclarationNode:
+    def parse_single_declaration(self, data_type: str, mutable: bool, scope: Enviroment) -> DeclarationNode:
         #Locacion de la declaracion
         none_aux = NoneNode(self.line(), self.column())
         
@@ -183,10 +175,7 @@ class Parser:
             self.declare_error("Variable declaration attempt failed; neither assignment operator ('=') for initialization \nnor semicolon (';') to terminate the statement with an empty declaration was found.")
             return none_aux
         
-        if self.valid_var(var_name, data_type, constant, var_value, scope):
-            return DeclarationNode(var_name, data_type, var_value)
-        else:
-            return none_aux
+        return DeclarationNode(var_name, data_type, mutable, var_value)
         
          
     def parse_assignment(self, scope) -> AssignmentNode:
@@ -242,11 +231,7 @@ class Parser:
             self.declare_error("The attempt to assign to a variable failed; the common assignment operator or compound assignment operator was not found.")
             return none_aux
         
-        if scope.assignment_var(var_name, var_value):
-            return AssignmentNode(var_name, var_value)    
-        else:
-            self.declare_error(f"Variable assignment attempt failed, variable '{var_name}' does not exist")
-            return none_aux
+        return AssignmentNode(var_name, var_value)
             
 
     def parse_call_function(self, scope) -> CallNode | NoneNode:
@@ -295,7 +280,7 @@ class Parser:
     
     def parse_while_statement(self, scope: Enviroment, loop: bool) -> WhileNode:
         if loop:
-            cond = BoolNode(True, self.current_token.line, self.current_token.column)
+            cond = BoolNode(True, self.line(), self.column())
         else:
             cond = self.expression(scope)
             
@@ -365,7 +350,7 @@ class Parser:
         node = self.and_expr(scope)
         
         while self.match_token_type(TokenType.OR):
-            node = BooleanOpNode(node, "or", self.or_expr(scope))
+            node = BooleanOpNode(node, "or", self.and_expr(scope))
         
         return node
     
@@ -374,7 +359,7 @@ class Parser:
         node = self.not_boolean_expr(scope)
         
         while self.match_token_type(TokenType.AND):
-            node = BooleanOpNode(node, "and", self.and_expr(scope))
+            node = BooleanOpNode(node, "and", self.not_boolean_expr(scope))
             
         return node
     
@@ -392,7 +377,7 @@ class Parser:
         node = self.comp_expr(scope)
         
         while self.match_token_type(TokenType.EQUAL, TokenType.DIFERENT):
-            node = ComparisonOpNode(node, self.peek_token(-1).value, self.equality_expr(scope))
+            node = ComparisonOpNode(node, self.peek_token(-1).value, self.comp_expr(scope))
             
         return node
 
@@ -401,7 +386,7 @@ class Parser:
         node = self.add_expr(scope)
         
         while self.match_token_type(TokenType.GREATER, TokenType.LESS, TokenType.GREATER_EQUAL, TokenType.LESS_EQUAL):
-            node = ComparisonOpNode(node, self.peek_token(-1).value, self.comp_expr(scope))
+            node = ComparisonOpNode(node, self.peek_token(-1).value, self.add_expr(scope))
         
         return node    
         
@@ -419,14 +404,14 @@ class Parser:
         node = self.unary_expr(scope)
         
         while self.match_token_type(TokenType.STAR, TokenType.SLASH, TokenType.MOD):
-            node = BinaryOpNode(node, self.peek_token(-1).value, self.mult_expr(scope))
+            node = BinaryOpNode(node, self.peek_token(-1).value, self.unary_expr(scope))
             
         return node
     
     
     def unary_expr(self, scope) -> Node:
-        if self.match_token_type(TokenType.PLUS, TokenType.MINUS):
-            node = UnaryNode(self.peek_token(-1), self.unary_expr(scope))
+        if self.match_token_type(TokenType.MINUS):
+            node = UnaryNode(self.peek_token(-1).value, self.unary_expr(scope))
         else:
             node = self.power_expr(scope)
             
@@ -486,13 +471,8 @@ class Parser:
                 return self.parse_call_function(scope)
             else:
                 variable_token = self.peek_token(-1)
-                if scope.lookup_var(variable_token.value):
-                    node = VariableNode(variable_token.value, variable_token.line, variable_token.column)
-                    return node
-                else:
-                    self.declare_error(f"Attempt to use variable failed, variable '{variable_token.value}' was not found")
-                    return none_aux
+                return VariableNode(variable_token.value, variable_token.line, variable_token.column)
                 
         self.declare_error("Unexpected primitive")
         return none_aux
-            
+

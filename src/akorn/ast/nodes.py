@@ -54,6 +54,7 @@ class IntNode(LiteralNode):
         self.type = "int"
         self.line = line
         self.column = column
+        self.label = "integer 64-bits"
         
     def __repr__(self) -> str:
         return f"<{__class__.__name__} value={self.value}>"
@@ -71,6 +72,7 @@ class FloatNode(LiteralNode):
         self.type = "float"
         self.line = line
         self.column = column
+        self.label = "float 64-bits"
         
     def __repr__(self) -> str:
         return f"<{__class__.__name__} value={self.value}>"
@@ -88,6 +90,7 @@ class StringNode(LiteralNode):
         self.type = "string"
         self.line = line
         self.column = column
+        self.label = "string literal"
         
     def __repr__(self):
         return f'<{__class__.__name__} value="{self.value}">'
@@ -105,6 +108,7 @@ class BoolNode(LiteralNode):
         self.type = "bool"
         self.line = line
         self.column = column
+        self.label = "boolean value"
         
     def __repr__(self):
         return f"<{__class__.__name__} value={self.value}>"
@@ -119,6 +123,9 @@ class UnaryNode(Node):
         
         self.operator = operator
         self.node = node
+        self.line = node.line
+        self.column = node.column
+        self.label = "negative unary"
         
     def __repr__(self) -> str:
         return f"<{__class__.__name__} operator={self.operator} value={self.node})>"
@@ -131,6 +138,9 @@ class NotBooleanNode(Node):
         ) -> None:
         
         self.node = node
+        self.line = self.node.line
+        self.column = self.node.column
+        self.label = "boolean operation not"
         
     def __repr__(self):
         return f"<{__class__.__name__} value={self.node}"
@@ -147,6 +157,9 @@ class BooleanOpNode(Node):
         self.left = left
         self.operator = operator
         self.right = right
+        self.line = self.left.line
+        self.column = self.left.column
+        self.label = f"Boolean operation '{self.operator}'"
         
     def __repr__(self):
         return f"<{__class__.__name__} left={self.left} operator={self.operator}, right={self.right}"
@@ -165,6 +178,7 @@ class ComparisonOpNode(Node):
         self.right = right
         self.line: int = left.line
         self.column: int = left.column
+        self.label = f"comparison operation {self.operator}"
         
     def __repr__(self):
         return f"<{__class__.__name__} left={self.left} operator={self.operator} right={self.right}"
@@ -183,6 +197,7 @@ class BinaryOpNode(Node):
         self.right = right
         self.line: int = left.line
         self.column: int = left.column
+        self.label = f"arithmetic operation {self.operator}"
         
     def __repr__(self) -> str:
         return f"<{__class__.__name__} left={self.left} operator={self.operator} right={self.right}>"
@@ -199,6 +214,7 @@ class VariableNode(Node):
         self.name = name
         self.line = line
         self.column = column
+        self.label = "variable"
     
     def __repr__(self) -> str:
         return f"<{__class__.__name__} name={self.name}>"
@@ -213,6 +229,8 @@ class AssignmentNode(Node):
         
         self.name = name
         self.value = value
+        self.line = self.value.line
+        self.column = self.value.column
         
     def __repr__(self) -> str:
         return f"<{__class__.__name__} name={self.name} value={self.value}>"
@@ -223,12 +241,16 @@ class DeclarationNode(Node):
         self,
         name: str,
         type: str,
-        value: Node = NoneNode
+        mutable: bool,
+        value: Node = NoneNode,
         ) -> None:
         
         self.name = name
         self.type = type
         self.value = value
+        self.line = self.value.line
+        self.column = self.value.column
+        self.mutable = mutable
         
     def __repr__(self):
         return f"<{__class__.__name__} type={self.type} name={self.name} value={self.value}>"

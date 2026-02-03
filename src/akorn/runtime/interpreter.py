@@ -12,17 +12,14 @@ class Interpreter:
         raise Exception
 
 
-    def interpret_main(self, node):
-        statements = node.statements
-        scope = node.scope
+    def interpret_main(self):
+        statements = self.root_node.statements
+        scope = self.root_node.scope
         for statement in statements:
-            if isinstance(statement, DeclarationNode) or isinstance(statement, AssignmentNode):
-                var_value = self.visit_declar_assign(statement, scope)
-                self.update_scope_var(
-                    statement.name,
-                    var_value,
-                    scope,
-                )
+            if isinstance(statement, DeclarationNode):
+                self.visit_declar(statement, scope)
+            elif isinstance(statement, AssignmentNode):
+                self.visit_assing(statement, scope)
             elif isinstance(statement, CallNode):
                 self.visit_call_node(statement, scope)
             elif isinstance(statement, IfNode):
@@ -36,30 +33,32 @@ class Interpreter:
         scope: Enviroment = block_node.scope
         
         for statement in statements:
-            if isinstance(statement, DeclarationNode) or isinstance(statement, AssignmentNode):
-                var_value = self.visit_declar_assign(statement, scope)
-                self.update_scope_var(
-                    statement.name,
-                    var_value,
-                    scope,
-                )
+            if isinstance(statement, DeclarationNode):
+                self.visit_declar(statement, scope)
+            elif isinstance(statement, AssignmentNode):
+                self.visit_assing(statement, scope)
             elif isinstance(statement, CallNode):
                 self.visit_call_node(statement, scope)
             elif isinstance(statement, IfNode):
                 state = self.visit_if_node(statement)
-                return state
+                
+                if state == "continue":
+                    return "continue"
+                elif state == "break":
+                    return "break"
+                elif state == "pass":
+                    continue
+                
             elif isinstance(statement, BreakStatement):
                 return "break"
             elif isinstance(statement, ContinueStatement):
                 return "continue"
+            elif isinstance(statement, WhileNode):
+                self.visit_while_node(statement)
         
-        return "continue"
+        return "pass"
        
                    
-    def update_scope_var(self, var_name, var_value, scope: Enviroment):        
-        scope.assignment_var(var_name, var_value, True)
-   
-   
     def visit_literal(self, literal_node: LiteralNode):
         return literal_node.value
    
@@ -147,6 +146,9 @@ class Interpreter:
                 self.stop()
 
             else:
+                if isinstance(left, int) and isinstance(right, int):
+                    return left // right
+            
                 return left / right
             
         elif operator == '%':
@@ -164,17 +166,20 @@ class Interpreter:
 
 
     def visit_variable(self, var_node: VariableNode, scope: Enviroment):
-        pack = scope.get_var(var_node.name)
+        value = scope.get(var_node.name)
         
-        if pack["interpreted"]:
-            return pack["value"]
-        else:
-            return self.visit_node(pack["value"])
+        if not value is None:
+            return value
     
     
-    def visit_declar_assign(self, decl_assign_node: DeclarationNode | AssignmentNode, scope: Enviroment):
-        return self.visit_node(decl_assign_node.value, scope)
-  
+    def visit_declar(self, decl_node: DeclarationNode, scope: Enviroment):
+        value = self.visit_node(decl_node.value, scope)
+        symbol = Symbol(value, decl_node.type, decl_node.mutable)
+        scope.add_symbol(symbol, decl_node.name)
+        
+    def visit_assing(self, assing_node: AssignmentNode, scope: Enviroment):
+        value = self.visit_node(assing_node.value, scope)
+        scope.assign(assing_node.name, value)
   
     def visit_if_node(self, if_node: IfNode):
         len_branches = len(if_node.branches)
@@ -205,6 +210,16 @@ class Interpreter:
 
     # Builtin Functions temporals
     def builtin_write(args) -> None:
+        values = []
+        for arg in args:
+            values.append(arg)
+        
+        print(*values, end="")
+        return None
+    
+    
+    # Builtin Functions temporals
+    def builtin_writeline(args) -> None:
         values = []
         for arg in args:
             values.append(arg)
@@ -269,10 +284,11 @@ class Interpreter:
             elif input_string == values[2]:
                 return False
             else:
-                input_string = input(values[0])
-           
-                   
+                input_string = input(values[0])  
+        
+                  
     BUILTINS = {
+        "writeline":builtin_writeline,
         "write":builtin_write,
         "readInt":builtin_read_int,
         "readFloat":builtin_read_float,

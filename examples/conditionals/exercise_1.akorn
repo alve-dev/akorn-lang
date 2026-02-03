@@ -1,19 +1,19 @@
 // Ejercicio 1: Comprobacion de edad
 
-let int age = readInt("¿Cuantos años tienes?: "
+let int age = readInt("¿Cuantos años tienes?: ");
 
 if age > 0 and age < 120
 {
     if age >= 18
     {
-        write("Eres un adulto");
+        writeline("Eres un adulto");
     }
     else
     {
-        write("Eres un menor de edad");
+        writeline("Eres un menor de edad");
     }
 }
 else
 {
-    write("Tu edad no puede ser negativa o mayor a 120");
+    writeline("Tu edad no puede ser negativa o mayor a 120");
 }

@@ -4,4 +4,4 @@ let float peso = readFloat("Tu peso en kg: ");
 let float estatura = readFloat("Tu estatura en metros: ");
 let float imc = peso / estatura ** 2;
 
-write("Tu indice de masa corporal es:", imc);
+writeline("Tu indice de masa corporal es:", imc);

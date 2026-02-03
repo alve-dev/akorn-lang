@@ -4,4 +4,4 @@
 let int n = readInt("Digite el valor de n: ");
 let float suma = n * (n + 1) / 2;
 
-write(suma);
+writeline(suma);

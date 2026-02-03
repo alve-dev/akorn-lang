@@ -1,63 +1,36 @@
 from akorn.ast import Node
+from typing import Any
 
 class Enviroment:
     def __init__(self, parent = None) -> None:
         self.parent = parent
-        self.scope = {"variables":{}}
-    
-    def stop(self):
-        raise Exception
-    
-    def define_var(self, name: str, type: str, constant: bool, value: Node) -> bool:
-        if self.lookup_var(name):
-            return False
-        else:
-            self.scope["variables"].update({
-                    name:{
-                        "var_type" : type,
-                        "var_value" : value,
-                        "is_constant": constant,
-                        "interpreted": False
-                    }
-                }
-            )
-            return True
+        self.scope: dict[str : Any] = {}
         
-    def assignment_var(self, name: str, value, interpreted: bool = False) -> bool:
-        if name in self.scope["variables"].keys():
-            self.scope["variables"][name]["var_value"] = value
-            self.scope["variables"][name]["interpreted"] = interpreted
-            return True
-        else:
-            if (self.parent, Enviroment):
-                return self.parent.assignment_var(name, value, interpreted)
-                
-            else:
-                return False
+    def add_var(self, value: Any, name: str):
+        self.scope[name] = value
     
-    def get_var(self, name: str):
-        if name in self.scope["variables"]:
-            value = self.scope["variables"][name]["var_value"]
-            interpreted = self.scope["variables"][name]["interpreted"]
-            get_var_pack = {"value":value, "interpreted":interpreted}
+    def get(self, name: str) -> Any:
+        if name in self.scope:
+            return self.scope[name]
         else:
             if isinstance(self.parent, Enviroment):
-                get_var_pack = self.parent.get_var(name)
-                
-            else:
-                self.stop()
-        
-        return get_var_pack
+                return self.parent.get(name)
 
-    def lookup_var(self, name: str) -> bool:
-        if "variables" in self.scope.keys():
-            if name in self.scope["variables"].keys():
-                return True
-            else:
-                if isinstance(self.parent, Enviroment):
-                    return self.parent.lookup_var(name)
-        
-        return False   
-        
-        
-        
+        return None
+
+    def exists(self, name: str) -> bool:
+        if name in self.scope:
+            return True
+        else:
+            if isinstance(self.parent, Enviroment):
+                return self.parent.exists(name)
+
+        return False
+    
+    def assign(self, name: str, new_value: Any):
+        if name in self.scope:
+            self.scope[name] = new_value
+        else:
+            if isinstance(self.parent, Enviroment):
+                self.parent.assign(name, new_value)
+            

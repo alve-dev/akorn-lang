@@ -5,9 +5,9 @@ let string password = readString("Contraseña: ");
 
 if password_saved == password
 {
-    write("Contraseña correcta!");
+    writeline("Contraseña correcta!");
 }
 else
 {
-    write("Contraseña incorrecta -_-");
+    writeline("Contraseña incorrecta -_-");
 }

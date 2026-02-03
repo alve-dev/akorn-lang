@@ -17,7 +17,7 @@ class Lexer:
         "while":TokenType.WHILE,
         "loop":TokenType.LOOP,
         "break":TokenType.BREAK,
-        "continue":TokenType.BREAK,
+        "continue":TokenType.CONTINUE,
         "and":TokenType.AND,
         "or":TokenType.OR,
         "not":TokenType.NOT,
@@ -42,7 +42,7 @@ class Lexer:
     def reset_line(self) -> None:
         self.tokens_array.append(Token(TokenType.NEWLINE, "\\n", self.column, self.line))
         self.line += 1
-        self.column = 1
+        self.column = 0
      
         
     def peek(self, step: int) -> str:
@@ -80,13 +80,11 @@ class Lexer:
             
             else:
                 self.advance(1)
-    
+            
         if not success:
             self.reporter.add_error(
                 f"[Lexer Error][line:{self.line}, col:{self.column}] You forgot to close the comment with these characters -> '*/'"
             )
-        
-        self.advance(1)
     
     
     def scan_literal_number(self) -> None:

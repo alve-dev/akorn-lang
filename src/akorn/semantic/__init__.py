@@ -1,3 +1,3 @@
-from .type_checker import TypeChecker
+from .semantic import Semantic
 
-__all__ = ["TypeChecker"]
+__all__ = ["Semantic"]

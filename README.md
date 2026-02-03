@@ -8,7 +8,7 @@ In the long term, Akorn is intended to specialize in **Machine Learning** and **
 
 ---
 
-## Language Design Goals
+## Language Design Goal
 
 - Combine **low-level performance** with **high-level expressiveness**
 - Static typing by default, with controlled flexibility
@@ -145,14 +145,19 @@ let bigfloat big_number_float = 10.5**500;
 
 let string language_name = "Akorn";
 
-let array<string> languages = ["Akorn", "C", "Python", "C++", "Rust"];  //This would be equivalent to a Python tuple, that is, an immutable contiguous memory array (hence let) of strings called languages
+
+let array<string> languages = ["Akorn", "C", "Python", "C++", "Rust"];
+
+//This would be equivalent to a Python tuple, that is, an immutable contiguous memory array (hence let) of strings called languages
 
 let dict<string, string> developers = {
     "Guido van Rossum": "Python",
     "Bjarne Stroustrup": "C++",
     "Graydon Hoare": "Rust",
     "Me": "Akorn",
-}; // Just like above, since it has `let` it cannot change, it's an immutable dict, which has keys of strings and values ​​of strings, and is called developers
+};
+
+// Just like above, since it has `let` it cannot change, it's an immutable dict, which has keys of strings and values ​​of strings, and is called developers
 
 var bool in_development = True;
 ```

@@ -1,7 +1,7 @@
 from akorn.scanner import Lexer
 from akorn.syntatic_normalizer import TheNormalizer
 from akorn.parser.parser import Parser
-#from akorn.semantic import TypeChecker
+from akorn.semantic import Semantic
 from akorn.runtime.interpreter import Interpreter
 from akorn.utils.print_ast import print_ast
 import pathlib
@@ -41,13 +41,18 @@ def cmd_akorn_run(rute_script: str, reporter):
         reporter.clear_list_error()
         return
     
-    """#Type checker
-    type_checker = TypeChecker(root_node, reporter)
-    type_checker.check_types()"""
+    #Type checker
+    semantic_checker = Semantic(reporter)
+    semantic_checker.check_ast(root_node)
+    
+    if reporter.has_error():
+        reporter.display()
+        reporter.clear_list_error()
+        return
     
     #Interprete
     interpreter = Interpreter(root_node, reporter)
-    interpreter.interpret_main(root_node)
+    interpreter.interpret_main()
     
     if reporter.has_errors():
         reporter.display()
@@ -122,6 +127,10 @@ def cmd_akorn_ast(rute_script: str, reporter):
         reporter.clear_list_error()
         return
     
+    #semantic
+    #semantic = Semantic(root_node, reporter)
+    #semantic.check_ast()
+        
     #Print ast
     print_ast(root_node)
    

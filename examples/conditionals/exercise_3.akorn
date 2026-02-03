@@ -4,9 +4,9 @@ let int a = readInt("Digite un número -> "), b = readInt("Digite otro número -
 
 if b == 0
 {
-    write("No se puede dividir por 0");
+    writeline("No se puede dividir por 0");
 }
 else
 {
-    write(a, '/', b, '=', a / b);
+    writeline(a, '/', b, '=', a / b);
 }

@@ -5,4 +5,4 @@ let float year_one = actual_money * 1.04;
 let float year_two = year_one * 1.04;
 let float year_three = year_two * 1.04;
 
-write("Primer año:", year_one, "\nSegundo año:", year_two, "\nTercer año:", year_three);
+writeline("Primer año:", year_one, "\nSegundo año:", year_two, "\nTercer año:", year_three);
